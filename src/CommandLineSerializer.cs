@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
-using Decoherence.CommandLineParsing.Exceptions;
-using Decoherence.SystemExtensions;
+using System.Diagnostics;
 
 namespace Decoherence.CommandLineParsing
 {
     public class CommandLineSerializer
     {
-        public void DeserializeValues(string[] args, Specs specs, out Values values, out string[] remainArgs)
+        private readonly SerializationStrategy mSerializationStrategy;
+        
+        public void DeserializeValues(IEnumerable<string> args, Specs specs, out Values values, out LinkedList<string> remainArgs)
         {
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
@@ -17,38 +16,43 @@ namespace Decoherence.CommandLineParsing
                 throw new ArgumentNullException(nameof(specs));
 
             values = new Values();
-            LinkedList<string> argList = new(args);
+            remainArgs = new LinkedList<string>(args);
             List<string> matchedArgs = new();
 
-            // 先解析Option
-            foreach (var option in specs.Options)
+            // --- 先解析Option ---
+            List<Option> options = new(specs.Options);
+            
+            // 把Switch排在最前面，这样可以保证在处理ShortName时先消耗掉Switch，这样合法的Scalar和Sequence就在最后了
+            options.Sort((a, b) => (int)a.Type - (int)b.Type);
+            
+            foreach (var option in options)
             {
                 object? value;
                 
                 matchedArgs.Clear();
-                var matched = _TryMatchOption(argList, matchedArgs);
+                var matched = _MatchOptionAndConsumeArgs(option, remainArgs, matchedArgs);
                 if (!matched)
                 {
                     if (option.Required)
                     {
-                        throw new LackRequiredException($"Lack of required option '{option.Name}'.");
+                        throw new InvalidArgsException($"Lack of required option '{option.Name}'.");
                     }
 
-                    value = option.DefaultValueCreator!();
+                    value = option.Type == OptionType.Switch ? option.DeserializeSwitch(matched) : option.DefaultValueCreator!();
                 }
                 else
                 {
                     if (option.Type == OptionType.Switch)
                     {
-                        value = matched;
+                        value = option.DeserializeSwitch(matched);
                     }
                     else if (option.Type == OptionType.Scalar)
                     {
-                        value = _ParseScalarValue(option, matchedArgs[0]);
+                        value = option.DeserializeScalar(matchedArgs[0]);
                     }
                     else if (option.Type == OptionType.Sequence)
                     {
-                        value = _ParseSequenceValue(option, matchedArgs);
+                        value = option.DeserializeSequence(matchedArgs);
                     }
                     else
                     {
@@ -63,13 +67,13 @@ namespace Decoherence.CommandLineParsing
             foreach (var argument in specs.Arguments)
             {
                 object? value;
-                var first = argList.First;
+                var first = remainArgs.First;
 
                 if (first == null)
                 {
                     if (argument.Required)
                     {
-                        throw new LackRequiredException($"Lack of required argument '{argument.Name}'.");
+                        throw new InvalidArgsException($"Lack of required argument '{argument.Name}'.");
                     }
 
                     value = argument.DefaultValueCreator!();
@@ -78,15 +82,15 @@ namespace Decoherence.CommandLineParsing
                 {
                     if (argument.Type == ArgumentType.Scalar)
                     {
-                        value = _ParseScalarValue(argument, first.Value);
-                        argList.RemoveFirst();
+                        value = argument.DeserializeScalar(first.Value);
+                        remainArgs.RemoveFirst();
                     }
                     else if (argument.Type == ArgumentType.Sequence)
                     {
-                        value = _ParseSequenceValue(argument, argList);
-                        while (argList.First != null)
+                        value = argument.DeserializeSequence(remainArgs);
+                        while (remainArgs.First != null)
                         {
-                            argList.RemoveFirst();
+                            remainArgs.RemoveFirst();
                         }
                     }
                     else
@@ -99,48 +103,128 @@ namespace Decoherence.CommandLineParsing
             }
         }
 
-        private bool _TryMatchOption(Option option, LinkedList<string> argList, List<string> matchedArgs)
+        public string SerializeValue(Type valueType, object? value)
         {
+            throw new NotImplementedException();
+        }
+
+        public object? DeserializeValue(Type valueType, IEnumerable<string> args)
+        {
+             mSerializationStrategy.GetDeserializeFunc(valueType)
+        }
+
+        private bool _MatchOptionAndConsumeArgs(Option option, LinkedList<string> argList, List<string> matchedArgs)
+        {
+            // LongName比ShortName更具体，所以先匹配LongName
             if (option.LongName != null)
             {
                 var node = argList.Find($"--{option.LongName}");
                 if (node != null)
                 {
-                    if (option.Type == OptionType.Switch)
+                    _HandleOption(option, argList, matchedArgs, node, -1);
+                    return true;
+                }
+            }
+            else if (option.ShortName != null)
+            {
+                var shortNameIndex = -1;
+                LinkedListNode<string>? node = null;
+                var tmpNode = argList.First;
+                while (tmpNode != null)
+                {
+                    if (tmpNode.Value.StartsWith("-"))
                     {
-                        argList.Remove(node);
-                        return true;
+                        shortNameIndex = tmpNode.Value.IndexOf(option.ShortName.Value);
+                        if (shortNameIndex > 0)
+                        {
+                            node = tmpNode;
+                            break;
+                        }
                     }
                     
-                    if (option.Type == OptionType.Scalar)
-                    {
-                        if (node.Next == null)
-                        {
-                            throw new LackOptionValueException($"Lack value of scalar option '{option.Name}'.");
-                        }
-                        
-                        matchedArgs.Add(node.Value);
-                        argList.Remove(node.Next);
-                        argList.Remove(node);
-                        return true;
-                    }
+                    tmpNode = tmpNode.Next;
+                }
 
-                    if (option.Type == OptionType.Sequence)
-                    {
-                        node.FindNext($"--{option.LongName}")
-                    }
+                if (node == null)
+                {
+                    return false;
+                }
+
+                _HandleOption(option, argList, matchedArgs, node, shortNameIndex);
+                return true;
+            }
+
+            throw new ImplException();
+        }
+
+        private void _HandleOption(Option option, LinkedList<string> argList, List<string> matchedArgs, LinkedListNode<string> optionNode, int shortNameIndex)
+        {
+            if (option.Type == OptionType.Switch)
+            {
+                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
+                return;
+            }
+            
+            var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
+            
+            // 非Switch Short Option必须在同组的所有Short Name最后面
+            if (shortNameIndex != -1 && shortNameIndex != optionNode.Value.Length - 1)
+            {
+                throw new InvalidArgsException($"Option '{optionName}' must be after all short names.");
+            }
+            
+            if (option.Type == OptionType.Scalar)
+            {
+                if (!_IsValidOptionValueNode(optionNode.Next))
+                {
+                    throw new InvalidArgsException($"Lack value of option '{optionName}'.");
+                }
+
+                matchedArgs.Add(optionNode.Next!.Value);
+                argList.Remove(optionNode.Next);
+
+                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
+            }
+            else if (option.Type == OptionType.Sequence)
+            {
+                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
+                
+                var argNode = optionNode.Next;
+                while (_IsValidOptionValueNode(argNode))
+                {
+                    matchedArgs.Add(argNode!.Value);
+
+                    var tmpNode = argNode.Next;
+                    argList.Remove(argNode);
+                    argNode = tmpNode;
                 }
             }
         }
 
-        private object? _ParseScalarValue(Spec spec, string arg)
+        private void _ConsumeOptionArg(LinkedList<string> argList, LinkedListNode<string> optionNode, int shortNameIndex)
         {
-            throw new NotImplementedException();
+            if (shortNameIndex == -1)
+            {
+                argList.Remove(optionNode);
+            }
+            else
+            {
+                var newValue = optionNode.Value.Remove(shortNameIndex, 1);
+                if (newValue == "-")
+                {
+                    argList.Remove(optionNode);
+                }
+                else
+                {
+                    optionNode.Value = newValue;
+                }
+            }
         }
-        
-        private object? _ParseSequenceValue(Spec spec, IEnumerable<string> args)
+
+        private bool _IsValidOptionValueNode(LinkedListNode<string>? node)
         {
-            throw new NotImplementedException();
+            // "--"是option结束符
+            return node != null && node.Value != "--";
         }
     }
 }

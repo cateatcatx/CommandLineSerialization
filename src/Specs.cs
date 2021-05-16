@@ -1,38 +1,55 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Decoherence.CommandLineParsing
 {
     public class Specs
     {
-        public IEnumerable<Argument> Arguments { get; }
-        
-        public IEnumerable<Option> Options { get; }
+        public IEnumerable<Argument> Arguments => mArguments;
+        public IEnumerable<Option> Options => mOptions;
+
+        private readonly List<Argument> mArguments = new();
+        private readonly List<Option> mOptions = new();
         
         public Argument AddArgument(Argument argument)
         {
-            throw new NotImplementedException();
+            mArguments.Add(argument);
+            return argument;
         }
         
         public Option AddOption(Option option)
         {
-            throw new NotImplementedException();
+            if (option.ShortName != null && GetOptionByShortName(option.ShortName.Value) != null)
+            {
+                throw new ArgumentException($"Option with short name '-{option.ShortName}' already exists.");
+            }
+            if (option.LongName != null && GetOptionByLongName(option.LongName) != null)
+            {
+                throw new ArgumentException($"Option with long name '-{option.LongName}' already exists.");
+            }
+            
+            mOptions.Add(option);
+            return option;
         }
         
-        public Argument GetArgument(int position)
+        public Argument? GetArgument(int position)
         {
-            throw new NotImplementedException();
+            if (position < 0 || position >= mArguments.Count)
+            {
+                return null;
+            }
+
+            return mArguments[position];
         }
 
-        public Option GetOptionByShortName(string shortName)
+        public Option? GetOptionByShortName(char shortName)
         {
-            throw new NotImplementedException();
+            return mOptions.Find(option => option.ShortName == shortName);
         }
         
-        public Option GetOptionByLongName(string longName)
+        public Option? GetOptionByLongName(string longName)
         {
-            throw new NotImplementedException();
+            return mOptions.Find(option => option.LongName == longName);
         }
     }
 }
