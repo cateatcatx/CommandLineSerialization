@@ -7,6 +7,11 @@ namespace Decoherence.CommandLineParsing
     public class CommandLineSerializer
     {
         private readonly SerializationStrategy mSerializationStrategy;
+
+        public CommandLineSerializer(SerializationStrategy? serializationStrategy = null)
+        {
+            mSerializationStrategy = serializationStrategy ?? new SerializationStrategy();
+        }
         
         public void DeserializeValues(IEnumerable<string> args, Specs specs, out Values values, out LinkedList<string> remainArgs)
         {
@@ -38,26 +43,11 @@ namespace Decoherence.CommandLineParsing
                         throw new InvalidArgsException($"Lack of required option '{option.Name}'.");
                     }
 
-                    value = option.Type == OptionType.Switch ? option.DeserializeSwitch(matched) : option.DefaultValueCreator!();
+                    value = option.DefaultValueCreator!();
                 }
                 else
                 {
-                    if (option.Type == OptionType.Switch)
-                    {
-                        value = option.DeserializeSwitch(matched);
-                    }
-                    else if (option.Type == OptionType.Scalar)
-                    {
-                        value = option.DeserializeScalar(matchedArgs[0]);
-                    }
-                    else if (option.Type == OptionType.Sequence)
-                    {
-                        value = option.DeserializeSequence(matchedArgs);
-                    }
-                    else
-                    {
-                        throw new NotImplementedException(option.Type.ToString());
-                    }
+                    value = DeserializeValue(option.ValueType, matchedArgs);
                 }
                 
                 values.AddValue(option, value);
@@ -80,23 +70,8 @@ namespace Decoherence.CommandLineParsing
                 }
                 else
                 {
-                    if (argument.Type == ArgumentType.Scalar)
-                    {
-                        value = argument.DeserializeScalar(first.Value);
-                        remainArgs.RemoveFirst();
-                    }
-                    else if (argument.Type == ArgumentType.Sequence)
-                    {
-                        value = argument.DeserializeSequence(remainArgs);
-                        while (remainArgs.First != null)
-                        {
-                            remainArgs.RemoveFirst();
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException(argument.Type.ToString());
-                    }
+                    value = DeserializeValue(argument.ValueType, remainArgs);
+                    remainArgs.RemoveFirst();
                 }
                 
                 values.AddValue(argument, value);
@@ -110,7 +85,8 @@ namespace Decoherence.CommandLineParsing
 
         public object? DeserializeValue(Type valueType, IEnumerable<string> args)
         {
-             mSerializationStrategy.GetDeserializeFunc(valueType)
+            var func = mSerializationStrategy.GetDeserializeFunc(valueType);
+            return func(this, valueType, args);
         }
 
         private bool _MatchOptionAndConsumeArgs(Option option, LinkedList<string> argList, List<string> matchedArgs)
@@ -125,7 +101,8 @@ namespace Decoherence.CommandLineParsing
                     return true;
                 }
             }
-            else if (option.ShortName != null)
+            
+            if (option.ShortName != null)
             {
                 var shortNameIndex = -1;
                 LinkedListNode<string>? node = null;
@@ -154,69 +131,86 @@ namespace Decoherence.CommandLineParsing
                 return true;
             }
 
-            throw new ImplException();
+            return false;
         }
 
         private void _HandleOption(Option option, LinkedList<string> argList, List<string> matchedArgs, LinkedListNode<string> optionNode, int shortNameIndex)
         {
             if (option.Type == OptionType.Switch)
             {
-                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
-                return;
-            }
-            
-            var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
-            
-            // 非Switch Short Option必须在同组的所有Short Name最后面
-            if (shortNameIndex != -1 && shortNameIndex != optionNode.Value.Length - 1)
-            {
-                throw new InvalidArgsException($"Option '{optionName}' must be after all short names.");
-            }
-            
-            if (option.Type == OptionType.Scalar)
-            {
-                if (!_IsValidOptionValueNode(optionNode.Next))
-                {
-                    throw new InvalidArgsException($"Lack value of option '{optionName}'.");
-                }
-
-                matchedArgs.Add(optionNode.Next!.Value);
-                argList.Remove(optionNode.Next);
-
-                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
-            }
-            else if (option.Type == OptionType.Sequence)
-            {
-                _ConsumeOptionArg(argList, optionNode, shortNameIndex);
-                
-                var argNode = optionNode.Next;
-                while (_IsValidOptionValueNode(argNode))
-                {
-                    matchedArgs.Add(argNode!.Value);
-
-                    var tmpNode = argNode.Next;
-                    argList.Remove(argNode);
-                    argNode = tmpNode;
-                }
-            }
-        }
-
-        private void _ConsumeOptionArg(LinkedList<string> argList, LinkedListNode<string> optionNode, int shortNameIndex)
-        {
-            if (shortNameIndex == -1)
-            {
-                argList.Remove(optionNode);
-            }
-            else
-            {
-                var newValue = optionNode.Value.Remove(shortNameIndex, 1);
-                if (newValue == "-")
+                if (shortNameIndex == -1)
                 {
                     argList.Remove(optionNode);
                 }
                 else
                 {
-                    optionNode.Value = newValue;
+                    var newValue = optionNode.Value.Remove(shortNameIndex, 1);
+                    if (newValue == "-")
+                    {
+                        argList.Remove(optionNode);
+                    }
+                    else
+                    {
+                        optionNode.Value = newValue;
+                    }
+                }
+                
+                return;
+            }
+            
+            var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
+
+            if (option.Type == OptionType.Scalar)
+            {
+                string? optionValue = null;
+                if (shortNameIndex != -1 && shortNameIndex < optionNode.Value.Length - 1)
+                {
+                    optionValue = optionNode.Value.Substring(shortNameIndex + 1);
+                    argList.Remove(optionNode);
+                }
+                else
+                {
+                    if (!_IsValidOptionValueNode(optionNode.Next))
+                    {
+                        throw new InvalidArgsException($"Lack value of option '{optionName}'.");
+                    }
+
+                    optionValue = optionNode.Next!.Value;
+                    argList.Remove(optionNode.Next);
+                    argList.Remove(optionNode);
+                }
+
+                matchedArgs.Add(optionValue);
+            }
+            else if (option.Type == OptionType.Sequence)
+            {
+                string? optionValue = null;
+                LinkedListNode<string>? node = null;
+                if (shortNameIndex != -1 && shortNameIndex < optionNode.Value.Length - 1)
+                {
+                    optionValue = optionNode.Value.Substring(shortNameIndex + 1);
+                    node = optionNode;
+                }
+                else if (_IsValidOptionValueNode(optionNode.Next))
+                {
+                    optionValue = optionNode.Next!.Value;
+                    node = optionNode.Next;
+                    argList.Remove(optionNode);
+                }
+                
+                while (optionValue != null)
+                {
+                    matchedArgs.Add(optionValue);
+
+                    if (!_IsValidOptionValueNode(node!.Next))
+                    {
+                        continue;
+                    }
+                    
+                    var tmpNode = node.Next;
+                    argList.Remove(node);
+                    node = tmpNode;
+                    optionValue = node!.Value;
                 }
             }
         }

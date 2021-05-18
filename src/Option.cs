@@ -27,7 +27,7 @@ namespace Decoherence.CommandLineParsing
         
         public static Option NewOptional(Type valueType,
             OptionType type, 
-            Func<object?>? defaultValueCreator, 
+            Func<object?> defaultValueCreator, 
             string? longName = null, 
             char? shortName = null,
             SerializeFunc? customSerializeFunc = null, 

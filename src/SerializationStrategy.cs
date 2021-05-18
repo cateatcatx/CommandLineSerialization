@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,17 +18,30 @@ namespace Decoherence.CommandLineParsing
 
         public DeserializeFunc GetDeserializeFunc(Type valueType)
         {
-            if (valueType.IsPrimitive)
+            if (_IsSimpleType(valueType))
             {
-                return DeserializePrimitive;
+                return _DeserializeSimple;
             }
-            else if (valueType.IsEnum)
+            
+            if (valueType.IsEnum)
             {
-                return DeserializeEnum;
+                return _DeserializeEnum;
             }
+
+            if (typeof(IEnumerable).IsAssignableFrom(valueType))
+            {
+                return _DeserializeEnumerable;
+            }
+
+            return _DeserializeClass;
         }
 
-        private object? DeserializePrimitive(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private bool _IsSimpleType(Type valueType)
+        {
+            return valueType.IsPrimitive || valueType == typeof(string);
+        }
+
+        private object? _DeserializeSimple(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
         {
             var arg = args.First();
             return Convert.ChangeType(arg, valueType);
@@ -39,7 +53,7 @@ namespace Decoherence.CommandLineParsing
         ///     A 或 1
         ///     A,B 或 A, B 或 1,100 或 1,B
         /// </summary>
-        private object? DeserializeEnum(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private object? _DeserializeEnum(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
         {
             var arg = args.First();
             var finalValue = 0;
@@ -75,7 +89,17 @@ namespace Decoherence.CommandLineParsing
                 finalValue |= value.Value;
             }
 
-            return finalValue;
+            return Enum.ToObject(valueType, finalValue);
+        }
+        
+        private object? _DeserializeEnumerable(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        {
+            throw new NotImplementedException();
+        }
+        
+        private object? _DeserializeClass(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        {
+            throw new NotImplementedException();
         }
     }
 }
