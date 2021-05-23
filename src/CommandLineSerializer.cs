@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 
 namespace Decoherence.CommandLineParsing
 {
@@ -12,15 +13,20 @@ namespace Decoherence.CommandLineParsing
         {
             mSerializationStrategy = serializationStrategy ?? new SerializationStrategy();
         }
+
+        public Values DeserializeValues(IEnumerable<string> args, Specs specs)
+        {
+            return DeserializeValues(args, specs, out _);
+        }
         
-        public void DeserializeValues(IEnumerable<string> args, Specs specs, out Values values, out LinkedList<string> remainArgs)
+        public Values DeserializeValues(IEnumerable<string> args, Specs specs, out LinkedList<string> remainArgs)
         {
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
             if (specs == null)
                 throw new ArgumentNullException(nameof(specs));
 
-            values = new Values();
+            var values = new Values();
             remainArgs = new LinkedList<string>(args);
             List<string> matchedArgs = new();
 
@@ -76,6 +82,8 @@ namespace Decoherence.CommandLineParsing
                 
                 values.AddValue(argument, value);
             }
+
+            return values;
         }
 
         public string SerializeValue(Type valueType, object? value)
@@ -92,6 +100,9 @@ namespace Decoherence.CommandLineParsing
         private bool _MatchOptionAndConsumeArgs(Option option, LinkedList<string> argList, List<string> matchedArgs)
         {
             // LongName比ShortName更具体，所以先匹配LongName
+            // 格式：
+            //  --arg1 100
+            //  --arg1=100
             if (option.LongName != null)
             {
                 var node = argList.Find($"--{option.LongName}");
@@ -109,14 +120,10 @@ namespace Decoherence.CommandLineParsing
                 var tmpNode = argList.First;
                 while (tmpNode != null)
                 {
-                    if (tmpNode.Value.StartsWith("-"))
+                    if (_TryGetShortNameIndex(tmpNode, option, out shortNameIndex))
                     {
-                        shortNameIndex = tmpNode.Value.IndexOf(option.ShortName.Value);
-                        if (shortNameIndex > 0)
-                        {
-                            node = tmpNode;
-                            break;
-                        }
+                        node = tmpNode;
+                        break;
                     }
                     
                     tmpNode = tmpNode.Next;
@@ -133,7 +140,26 @@ namespace Decoherence.CommandLineParsing
 
             return false;
         }
+        
+        private bool _TryGetShortNameIndex(LinkedListNode<string> node, Option option, out int shortNameIndex)
+        {
+            shortNameIndex = -1;
+            
+            if (option.ShortName != null && node.Value.StartsWith("-"))
+            {
+                shortNameIndex = node.Value.IndexOf(option.ShortName.Value);
+                return shortNameIndex > 0;
+            }
 
+            return false;
+        }
+
+        /// <param name="option"></param>
+        /// <param name="argList"></param>
+        /// <param name="matchedArgs"></param>
+        /// <param name="optionNode"></param>
+        /// <param name="shortNameIndex">-1代表长Option</param>
+        /// <exception cref="InvalidArgsException"></exception>
         private void _HandleOption(Option option, LinkedList<string> argList, List<string> matchedArgs, LinkedListNode<string> optionNode, int shortNameIndex)
         {
             if (option.Type == OptionType.Switch)
@@ -157,68 +183,114 @@ namespace Decoherence.CommandLineParsing
                 
                 return;
             }
-            
-            var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
 
             if (option.Type == OptionType.Scalar)
             {
-                string? optionValue = null;
-                if (shortNameIndex != -1 && shortNameIndex < optionNode.Value.Length - 1)
+                var optionValue = _GetAndConsumeFirstValue(argList, optionNode, shortNameIndex, out _);
+                if (optionValue == null)
                 {
-                    optionValue = optionNode.Value.Substring(shortNameIndex + 1);
-                    argList.Remove(optionNode);
-                }
-                else
-                {
-                    if (!_IsValidOptionValueNode(optionNode.Next))
-                    {
-                        throw new InvalidArgsException($"Lack value of option '{optionName}'.");
-                    }
-
-                    optionValue = optionNode.Next!.Value;
-                    argList.Remove(optionNode.Next);
-                    argList.Remove(optionNode);
+                    var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
+                    throw new InvalidArgsException($"Lack scalar option value of '{optionName}'.");
                 }
 
                 matchedArgs.Add(optionValue);
             }
             else if (option.Type == OptionType.Sequence)
             {
-                string? optionValue = null;
-                LinkedListNode<string>? node = null;
-                if (shortNameIndex != -1 && shortNameIndex < optionNode.Value.Length - 1)
-                {
-                    optionValue = optionNode.Value.Substring(shortNameIndex + 1);
-                    node = optionNode;
-                }
-                else if (_IsValidOptionValueNode(optionNode.Next))
-                {
-                    optionValue = optionNode.Next!.Value;
-                    node = optionNode.Next;
-                    argList.Remove(optionNode);
-                }
-                
+                var optionValue = _GetAndConsumeFirstValue(argList, optionNode, shortNameIndex, out var nextNode);
                 while (optionValue != null)
                 {
                     matchedArgs.Add(optionValue);
 
-                    if (!_IsValidOptionValueNode(node!.Next))
+                    if (nextNode == null || nextNode.Value == "--")
                     {
-                        continue;
+                        break;
                     }
-                    
-                    var tmpNode = node.Next;
-                    argList.Remove(node);
-                    node = tmpNode;
-                    optionValue = node!.Value;
+
+                    if (option.LongName != null && nextNode.Value.StartsWith("--"))
+                    {
+                        optionValue = _GetAndConsumeFirstValue(argList, nextNode, -1, out nextNode);
+                    }
+                    else if (_TryGetShortNameIndex(nextNode, option, out var tmpShortNameIndex))
+                    {
+                        optionValue = _GetAndConsumeFirstValue(argList, nextNode, tmpShortNameIndex, out nextNode);
+                    }
+                    else
+                    {
+                        optionValue = nextNode.Value;
+                    }
                 }
             }
         }
 
-        private bool _IsValidOptionValueNode(LinkedListNode<string>? node)
+        private string? _GetAndConsumeFirstValue(LinkedList<string> argList, LinkedListNode<string> optionNode, int shortNameIndex, out LinkedListNode<string>? nextNode)
+        {
+            string? optionValue = null;
+
+            if (shortNameIndex != -1)
+            {
+                var equalSignIndex = optionNode.Value.IndexOf('=');
+                if (equalSignIndex > 0)
+                {// 形如--arg1=100
+                    nextNode = optionNode.Next;
+                    
+                    if (equalSignIndex == optionNode.Value.Length - 1)
+                    {
+                        return null;
+                    }
+
+                    optionValue = optionNode.Value.Substring(equalSignIndex + 1);
+                    argList.Remove(optionNode);
+                }
+                else
+                {// 形如--arg1 100
+                    nextNode = optionNode.Next;
+                    
+                    if (optionNode.Next == null || optionNode.Next.Value == "--")
+                    {
+                        return null;
+                    }
+
+                    optionValue = optionNode.Next!.Value;
+                    argList.Remove(optionNode.Next);
+                    argList.Remove(optionNode);
+                }
+            }
+            else
+            {
+                if (shortNameIndex < optionNode.Value.Length - 1)
+                {// 形如-a100
+                    nextNode = optionNode;
+                    
+                    optionValue = optionNode.Value.Substring(shortNameIndex + 1);
+                    optionNode.Value = optionNode.Value.Substring(0, shortNameIndex);
+                    if (string.IsNullOrWhiteSpace(optionNode.Value))
+                    {
+                        argList.Remove(optionNode);
+                    }
+                }
+                else
+                {// 形如 -a 100
+                    nextNode = optionNode.Next;
+                    
+                    if (optionNode.Next == null || optionNode.Next.Value == "--")
+                    {
+                        return null;
+                    }
+
+                    optionValue = optionNode.Next!.Value;
+                    argList.Remove(optionNode.Next);
+                    argList.Remove(optionNode);
+                }
+            }
+
+            return optionValue;
+        }
+
+        private bool _IsValidOptionValueNode(LinkedListNode<string> node)
         {
             // "--"是option结束符
-            return node != null && node.Value != "--";
+            return node.Value != "--";
         }
     }
 }
