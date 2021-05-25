@@ -186,7 +186,7 @@ namespace Decoherence.CommandLineParsing
 
             if (option.Type == OptionType.Scalar)
             {
-                var optionValue = _GetAndConsumeFirstValue(argList, optionNode, shortNameIndex, out _);
+                var optionValue = _GetAndConsumeFirstOptionValue(argList, optionNode, shortNameIndex, out _);
                 if (optionValue == null)
                 {
                     var optionName = shortNameIndex == -1 ? $"--{option.LongName}" : $"-{option.ShortName}";
@@ -197,38 +197,48 @@ namespace Decoherence.CommandLineParsing
             }
             else if (option.Type == OptionType.Sequence)
             {
-                var optionValue = _GetAndConsumeFirstValue(argList, optionNode, shortNameIndex, out var nextNode);
-                while (optionValue != null)
+                var first = true;
+                var nextNode = optionNode;
+                while (nextNode != null)
                 {
-                    matchedArgs.Add(optionValue);
-
-                    if (nextNode == null || nextNode.Value == "--")
+                    string? optionValue = null;
+                    if (first)
                     {
-                        break;
-                    }
-
-                    if (option.LongName != null && nextNode.Value.StartsWith("--"))
-                    {
-                        optionValue = _GetAndConsumeFirstValue(argList, nextNode, -1, out nextNode);
-                    }
-                    else if (_TryGetShortNameIndex(nextNode, option, out var tmpShortNameIndex))
-                    {
-                        optionValue = _GetAndConsumeFirstValue(argList, nextNode, tmpShortNameIndex, out nextNode);
+                        first = false;
+                        optionValue = _GetAndConsumeFirstOptionValue(argList, optionNode, shortNameIndex, out nextNode);
                     }
                     else
                     {
-                        optionValue = nextNode.Value;
+                        if (option.LongName != null && nextNode.Value.StartsWith($"--{option.LongName}"))
+                        {
+                            optionValue = _GetAndConsumeFirstOptionValue(argList, nextNode, -1, out nextNode);
+                        }
+                        else if (_TryGetShortNameIndex(nextNode, option, out var tmpShortNameIndex))
+                        {
+                            optionValue = _GetAndConsumeFirstOptionValue(argList, nextNode, tmpShortNameIndex, out nextNode);
+                        }
+                        else
+                        {
+                            optionValue = nextNode.Value;
+                            nextNode = nextNode.Next;
+                        }
+                    }
+                    
+                    if (optionValue != null)
+                    {
+                        matchedArgs.Add(optionValue);
                     }
                 }
             }
         }
 
-        private string? _GetAndConsumeFirstValue(LinkedList<string> argList, LinkedListNode<string> optionNode, int shortNameIndex, out LinkedListNode<string>? nextNode)
+        private string? _GetAndConsumeFirstOptionValue(LinkedList<string> argList, LinkedListNode<string> optionNode, int shortNameIndex, out LinkedListNode<string>? nextNode)
         {
             string? optionValue = null;
 
-            if (shortNameIndex != -1)
-            {
+            if (shortNameIndex == -1)
+            {// long option
+                
                 var equalSignIndex = optionNode.Value.IndexOf('=');
                 if (equalSignIndex > 0)
                 {// 形如--arg1=100
@@ -244,46 +254,51 @@ namespace Decoherence.CommandLineParsing
                 }
                 else
                 {// 形如--arg1 100
-                    nextNode = optionNode.Next;
-                    
-                    if (optionNode.Next == null || optionNode.Next.Value == "--")
-                    {
-                        return null;
-                    }
-
-                    optionValue = optionNode.Next!.Value;
-                    argList.Remove(optionNode.Next);
-                    argList.Remove(optionNode);
+                    return _GetAndConsumeSplitOptionValue(argList, optionNode, out nextNode);
                 }
             }
             else
-            {
+            {// short option
+                
                 if (shortNameIndex < optionNode.Value.Length - 1)
-                {// 形如-a100
-                    nextNode = optionNode;
+                {// 形如-ba100
+                    nextNode = optionNode.Next;
                     
                     optionValue = optionNode.Value.Substring(shortNameIndex + 1);
                     optionNode.Value = optionNode.Value.Substring(0, shortNameIndex);
                     if (string.IsNullOrWhiteSpace(optionNode.Value))
-                    {
+                    {// 如果全部吃光，则删除arg
                         argList.Remove(optionNode);
                     }
                 }
                 else
                 {// 形如 -a 100
-                    nextNode = optionNode.Next;
-                    
-                    if (optionNode.Next == null || optionNode.Next.Value == "--")
-                    {
-                        return null;
-                    }
-
-                    optionValue = optionNode.Next!.Value;
-                    argList.Remove(optionNode.Next);
-                    argList.Remove(optionNode);
+                    return _GetAndConsumeSplitOptionValue(argList, optionNode, out nextNode);
                 }
             }
 
+            return optionValue;
+        }
+
+        private static string? _GetAndConsumeSplitOptionValue(LinkedList<string> argList, LinkedListNode<string> optionNode, out LinkedListNode<string>? nextNode)
+        {
+            if (optionNode.Next == null)
+            {
+                nextNode = null;
+                return null;
+            }
+            
+            if (optionNode.Next.Value == "--")
+            {
+                nextNode = null;
+                return null;
+            }
+            
+            nextNode = optionNode.Next.Next;
+
+            var optionValue = optionNode.Next.Value;
+            argList.Remove(optionNode.Next);
+            argList.Remove(optionNode);
             return optionValue;
         }
 
