@@ -1,0 +1,62 @@
+得到args、specs
+按switch优先的方式排序options
+遍历options
+	if LongName，有则赋值optionNode
+	if ShortName，有则赋值optionNode，shortNameIndex
+	optionNode == null
+		continue
+		
+	if optionNode is switch
+		消耗option(optionNode, shortNameIndex)
+	elif optionNode is scalar
+		获取并消耗第一个Value(optionNode, shortNameIndex)
+	elif optionNode is sequence
+		
+		while (optionNode)
+			value = 获取并消耗第一个Value(optionNode, shortNameIndex)
+			optionNode = null
+			if value != null, 添加到结果中
+			赋值arg
+			
+			while (arg)
+				if arg == --
+					arg = null
+					break
+				if 当前arg是LongName,
+					有则赋值 optionNode
+				if ShortName
+					有则赋值 optionNode shortNameIndex
+				
+				if optionNode != null
+					arg = null
+					break
+				
+				添加arg到结果中
+				消耗arg
+				赋值arg
+	
+	if 没匹配到args
+		处理未匹配()
+		continue
+	
+	value = 反序列化value()
+	添加value
+
+遍历arguments
+	获取第一个arg
+	if arg == null
+		处理未匹配()
+		continue
+	
+	if scalar
+		matchedArgs.Add(arg)
+	elif sequence
+		matchedArgs = args
+	
+	value = 反序列化value()
+	添加value
+	
+			
+		
+			
+	
