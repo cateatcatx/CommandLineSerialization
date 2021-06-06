@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.IO;
+using System.Linq;
 
 namespace Decoherence.CommandLineParsing
 {
@@ -28,20 +30,59 @@ namespace Decoherence.CommandLineParsing
 
             var values = new Values();
             remainArgs = new LinkedList<string>(args);
-            List<string> matchedArgs = new();
+            List<string> helperArgList = new();
 
             // --- 先解析Option ---
             List<Option> options = new(specs.Options);
             
-            // 把Switch排在最前面，这样可以保证在处理ShortName时先消耗掉Switch，这样合法的Scalar和Sequence就在最后了
+            // 按switch、scalar、sequence排序，这样可以保证在处理ShortName时先消耗掉Switch，这样合法的Scalar和Sequence就在最后了
             options.Sort((a, b) => (int)a.Type - (int)b.Type);
             
             foreach (var option in options)
             {
-                object? value;
+                IEnumerable<string>? matchedArgs = null;
+                object? value = null;
+
+                if (!_TryMatchOption(option, remainArgs, out var optionMatch))
+                {
+                    value = _HandleNoArg(option);
+                }
+                else
+                {
+                    if (option.Type == OptionType.Switch)
+                    {
+                        optionMatch!.ConsumeArgs();
+                    }
+                    else if (option.Type == OptionType.Scalar)
+                    {
+                        helperArgList.Clear();
+                        matchedArgs = helperArgList;
+                        optionMatch!.FillMatchedArgs(helperArgList);
+                        optionMatch!.ConsumeArgs();
+                    }
+                    else if (option.Type == OptionType.Sequence)
+                    {
+                        helperArgList.Clear();
+                        matchedArgs = helperArgList;
+
+                        while (optionMatch != null)
+                        {
+                            optionMatch!.FillMatchedArgs(helperArgList);
+                            var nextNode = optionMatch!.ConsumeArgs();
+                        }
+                    }
+
+                    value = DeserializeValue(option.ValueType, matchedArgs);
+                }
+
+                values.AddValue(option, value);
                 
-                matchedArgs.Clear();
-                var matched = _MatchOptionAndConsumeArgs(option, remainArgs, matchedArgs);
+                
+                
+                
+                
+                
+                var matched = _MatchOptionAndConsumeArgs(option, remainArgs, helperArgList);
                 if (!matched)
                 {
                     if (option.Required)
@@ -53,10 +94,10 @@ namespace Decoherence.CommandLineParsing
                 }
                 else
                 {
-                    value = DeserializeValue(option.ValueType, matchedArgs);
+                    value = DeserializeValue(option.ValueType, helperArgList);
                 }
                 
-                values.AddValue(option, value);
+                
             }
             
             // 再解析Argument
@@ -91,7 +132,7 @@ namespace Decoherence.CommandLineParsing
             throw new NotImplementedException();
         }
 
-        public object? DeserializeValue(Type valueType, IEnumerable<string> args)
+        public object? DeserializeValue(Type valueType, IEnumerable<string>? args)
         {
             var func = mSerializationStrategy.GetDeserializeFunc(valueType);
             return func(this, valueType, args);
@@ -306,6 +347,36 @@ namespace Decoherence.CommandLineParsing
         {
             // "--"是option结束符
             return node.Value != "--";
+        }
+
+        private bool _TryMatchOption(Option option, LinkedList<string> args, out OptionMatch? optionMatch)
+        {
+            // LongName比ShortName更具体，所以先匹配LongName
+            // 格式：
+            //  --arg1 100
+            //  --arg1=100
+            if (option.LongName == null || !args.TryFind(arg => $"--{option.LongName}" == arg, out optionNode))
+            {
+                if (option.ShortName != null)
+                {
+                    remainArgs.TryFind(arg => _MatchShortName(option.ShortName.Value, arg), out optionNode);
+                }
+            }
+        }
+
+        private bool _MatchLongName(string longName, string arg)
+        {
+            return $"--{longName}" == arg;
+        }
+
+        private bool _MatchShortName(char shortName, string arg)
+        {
+            throw new NotImplementedException();
+        }
+
+        private object? _HandleNoArg(Spec spec)
+        {
+            throw new NotImplementedException();
         }
     }
 }

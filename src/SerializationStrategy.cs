@@ -7,7 +7,7 @@ using System.Reflection;
 namespace Decoherence.CommandLineParsing
 {
     public delegate string SerializeFunc(CommandLineSerializer serializer, Type valueType, object? value);
-    public delegate object? DeserializeFunc(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args);
+    public delegate object? DeserializeFunc(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args);
     
     public class SerializationStrategy
     {
@@ -41,7 +41,7 @@ namespace Decoherence.CommandLineParsing
             return valueType.IsPrimitive || valueType == typeof(string);
         }
 
-        private object? _DeserializeSimple(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private object? _DeserializeSimple(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args)
         {
             var arg = args.First();
             return Convert.ChangeType(arg, valueType);
@@ -53,7 +53,7 @@ namespace Decoherence.CommandLineParsing
         ///     A 或 1
         ///     A,B 或 A, B 或 1,100 或 1,B
         /// </summary>
-        private object? _DeserializeEnum(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private object? _DeserializeEnum(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args)
         {
             var arg = args.First();
             var finalValue = 0;
@@ -92,12 +92,12 @@ namespace Decoherence.CommandLineParsing
             return Enum.ToObject(valueType, finalValue);
         }
         
-        private object? _DeserializeEnumerable(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private object? _DeserializeEnumerable(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args)
         {
             throw new NotImplementedException();
         }
         
-        private object? _DeserializeClass(CommandLineSerializer serializer, Type valueType, IEnumerable<string> args)
+        private object? _DeserializeClass(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args)
         {
             throw new NotImplementedException();
         }
