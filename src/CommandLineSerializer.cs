@@ -86,7 +86,7 @@ namespace Decoherence.CommandLineParsing
                             {
                                 valueArgHelpList.Add(optionMatch!.ValueArg);
                             }
-                            var nextNode = optionMatch!.ConsumeArgs();
+                            var nextNode = optionMatch!.ConsumeArgs(remainArgs);
 
                             optionMatch = null;
                             while (nextNode != null && !_TryMatchOption(option, nextNode, ref endOfOptionNode, out optionMatch))
@@ -103,7 +103,7 @@ namespace Decoherence.CommandLineParsing
                         }
                     }
 
-                    value = _DeserializeValue(option.ValueType, matchedValueArgs);
+                    value = DeserializeValue(option.ValueType, matchedValueArgs);
                 }
 
                 values.AddValue(option, value);
@@ -149,7 +149,7 @@ namespace Decoherence.CommandLineParsing
                         }
                     }
                     
-                    value = _DeserializeValue(argument.ValueType, valueArgHelpList);
+                    value = DeserializeValue(argument.ValueType, valueArgHelpList);
                 }
                 
                 values.AddValue(argument, value);
@@ -163,7 +163,7 @@ namespace Decoherence.CommandLineParsing
             throw new NotImplementedException();
         }
 
-        private object? _DeserializeValue(Type valueType, IEnumerable<string>? args)
+        public object? DeserializeValue(Type valueType, IEnumerable<string>? args)
         {
             var func = mSerializationStrategy.GetDeserializeFunc(valueType);
             return func(this, valueType, args);

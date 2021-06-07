@@ -42,7 +42,7 @@ namespace Decoherence.CommandLineParsing
 
         public object? DeserializeValue(CommandLineSerializer serializer, IEnumerable<string> args)
         {
-            return CustomDeserializeFunc?.Invoke(serializer, ValueType, args) ?? serializer._DeserializeValue(ValueType, args);
+            return CustomDeserializeFunc?.Invoke(serializer, ValueType, args) ?? serializer.DeserializeValue(ValueType, args);
         }
     }
 }

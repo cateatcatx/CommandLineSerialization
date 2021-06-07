@@ -62,36 +62,42 @@ namespace Decoherence.CommandLineParsing
         }
         
         /// <summary>
-        /// 消耗arg，并返回下一个有效node
+        /// 消耗arg，并返回下一个node
         /// </summary>
         /// <returns>下一个node</returns>
         public LinkedListNode<string>? ConsumeArgs(LinkedList<string> args)
         {
+            LinkedListNode<string>? nextNode;
+            
             // 值node总是要消耗的
             if (mOptionValueNode != null)
             {
+                nextNode = mOptionValueNode.Next;
                 args.Remove(mOptionValueNode);
             }
-
-            LinkedListNode<string>? nextNode;
-            
-            if (mShortName != null)
+            else
             {
+                nextNode = mOptionNode.Next;
+            }
+
+            if (mShortName != null) // short option
+            {
+                
                 var tmp = $"{mShortName.Value}{ValueArg}";
                 mOptionNode.Value = mOptionNode.Value.Remove(mOptionNode.Value.IndexOf(tmp, StringComparison.Ordinal), tmp.Length);
+                
+                // short option全部消耗完了
                 if (mOptionNode.Value == mOptionNamePrefix)
                 {
-                    nextNode = mOptionNode.Next;
                     args.Remove(mOptionNode);
-                    return nextNode;
                 }
-
-                return mOptionNode; // 还有没有消耗完的short option
+            }
+            else // long option
+            {
+                // long option，不管是'--arg=100'还是'--arg 100'，option node都需要删除
+                args.Remove(mOptionNode);
             }
             
-            // long option，不管是'--arg=100'还是'--arg 100'，option node都需要删除
-            nextNode = mOptionNode.Next;
-            args.Remove(mOptionNode);
             return nextNode;
         }
     }
