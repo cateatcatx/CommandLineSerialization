@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Decoherence.CommandLineParsing
+namespace Decoherence.CommandLineSerialization
 {
     internal class OptionMatch
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Decoherence.CommandLineParsing
+namespace Decoherence.CommandLineSerialization
 {
     public delegate string SerializeFunc(CommandLineSerializer serializer, Type valueType, object? value);
     public delegate object? DeserializeFunc(CommandLineSerializer serializer, Type valueType, IEnumerable<string>? args);

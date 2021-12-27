@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Decoherence.CommandLineParsing
+namespace Decoherence.CommandLineSerialization
 {
     public enum ArgumentType
     {

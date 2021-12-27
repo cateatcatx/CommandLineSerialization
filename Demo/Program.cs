@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Decoherence.CommandLineParsing;;
+using Decoherence.CommandLineSerialization;;
 
 
 var argArray = "1 2 -a100 --arg 200 -a 300 --arg=400".Split();

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineParsing
+namespace Decoherence.CommandLineSerialization
 {
     public class ImplException : Exception
     {

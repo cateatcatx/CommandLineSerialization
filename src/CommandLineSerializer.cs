@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Decoherence.CommandLineParsing
+namespace Decoherence.CommandLineSerialization
 {
     public class CommandLineSerializer
     {

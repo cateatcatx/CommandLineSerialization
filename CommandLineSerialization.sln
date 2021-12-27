@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandLineParsing", "src\CommandLineParsing.csproj", "{E1271181-A975-4329-87C8-8CE97F30BAD0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandLineSerialization", "src\CommandLineSerialization.csproj", "{E1271181-A975-4329-87C8-8CE97F30BAD0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{BCB6A7DC-D7D3-42CB-8468-8A98F69B2F36}"
 EndProject

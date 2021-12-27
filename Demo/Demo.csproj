@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\src\CommandLineParsing.csproj" />
+      <ProjectReference Include="..\src\CommandLineSerialization.csproj" />
     </ItemGroup>
 
 </Project>
