@@ -10,6 +10,13 @@ namespace Decoherence.CommandLineSerialization
 {
     public class CommandLineSerializer
     {
+        private enum OptionType {
+            LongOption,
+            ShortOption,
+        }
+        
+        private const int CTRL_OPTION = 0;
+        
         public string LongOptionPrefix => "--";
         
         public string ShortOptionPrefix => "-";
@@ -18,9 +25,50 @@ namespace Decoherence.CommandLineSerialization
         
         private readonly SerializationStrategy mSerializationStrategy;
 
+        private readonly StringUnescaper mOptionUnescaper;
+
         public CommandLineSerializer(SerializationStrategy? serializationStrategy = null)
         {
             mSerializationStrategy = serializationStrategy ?? new SerializationStrategy();
+            mOptionUnescaper = new StringUnescaper(new Dictionary<char, int>()
+            {
+                { '-', CTRL_OPTION },
+            });
+        }
+        
+        public List<string> Deserialize(string commandLine, ISpecs specs)
+        {
+            
+        }
+
+        public void Deserialize(
+            IEnumerable<string> args, 
+            ISpecs specs,
+            Action<string> onRemainArg)
+        {
+            foreach (var arg in args)
+            {
+                mOptionUnescaper.Reset(arg);
+                if (_CheckOption(mOptionUnescaper, out var optionType))
+                {
+                    
+                }
+            }
+        }
+
+        private bool _CheckOption(StringUnescaper stringUnescaper, out OptionType? optionType)
+        {
+            optionType = null;
+            if (stringUnescaper.ReadChar(out var _, out var value) && value == CTRL_OPTION)
+            {
+                optionType = OptionType.ShortOption;
+            }
+            if (stringUnescaper.ReadChar(out var _, out value) && value == CTRL_OPTION)
+            {
+                optionType = OptionType.LongOption;
+            }
+            
+            return optionType != null;
         }
 
         public Values DeserializeValues(IEnumerable<string> args, Specs specs)
