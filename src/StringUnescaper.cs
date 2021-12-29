@@ -2,7 +2,7 @@
 
 namespace Decoherence.CommandLineSerialization
 {
-    public class EscapeReader
+    public class StringUnescaper
     {
         private readonly string mStr;
         private readonly Dictionary<char, int> mCh2Value;
@@ -12,8 +12,8 @@ namespace Decoherence.CommandLineSerialization
         /// <param name="str">原始字符串</param>
         /// <param name="ch2Value">需要转义的字符映射，转义的字符会被映射成int值</param>
         /// <param name="escapeCh">转义字符</param>
-        public EscapeReader(
-            string str, 
+        public StringUnescaper(
+            string str,
             Dictionary<char, int> ch2Value,
             char escapeCh = '\\')
         {

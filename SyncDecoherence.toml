@@ -1,0 +1,16 @@
+# 源目录
+source = "../Decoherence/src"
+
+# 目标目录
+destiny = "src/Decoherence"
+
+# 要同步的路径
+sync_paths = [
+    "Misc",
+]
+
+# 同时时忽略的路径
+ignore_paths = [
+    'bin',
+    'obj',
+]
