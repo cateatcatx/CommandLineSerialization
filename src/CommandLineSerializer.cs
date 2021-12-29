@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Decoherence.CommandLineSerialization
@@ -14,8 +15,9 @@ namespace Decoherence.CommandLineSerialization
             LongOption,
             ShortOption,
         }
-        
+
         private const int CTRL_OPTION = 0;
+        private const int CTRL_EQUAL = 1;
         
         public string LongOptionPrefix => "--";
         
@@ -24,16 +26,18 @@ namespace Decoherence.CommandLineSerialization
         public string EndOfOptionArg => "--";
         
         private readonly SerializationStrategy mSerializationStrategy;
-
-        private readonly StringUnescaper mOptionUnescaper;
+        private readonly StringUnescaper mStringUnescaper;
+        private readonly StringBuilder mStringBuilder;
+        private readonly Dictionary<char, int> mOptionCharMapping;
+        private readonly Dictionary<char, int> mEqualCharMapping;
 
         public CommandLineSerializer(SerializationStrategy? serializationStrategy = null)
         {
             mSerializationStrategy = serializationStrategy ?? new SerializationStrategy();
-            mOptionUnescaper = new StringUnescaper(new Dictionary<char, int>()
-            {
-                { '-', CTRL_OPTION },
-            });
+            mStringUnescaper = new StringUnescaper();
+            mStringBuilder = new StringBuilder();
+            mOptionCharMapping = new Dictionary<char, int>() { {'-', CTRL_OPTION} };
+            mEqualCharMapping = new Dictionary<char, int>() { {'=', CTRL_EQUAL} };
         }
         
         public List<string> Deserialize(string commandLine, ISpecs specs)
@@ -46,26 +50,97 @@ namespace Decoherence.CommandLineSerialization
             ISpecs specs,
             Action<string> onRemainArg)
         {
+            string? parsingOptionName = null;
             foreach (var arg in args)
             {
-                mOptionUnescaper.Reset(arg);
-                if (_CheckOption(mOptionUnescaper, out var optionType))
+                if (parsingOptionName != null)
                 {
-                    
+                    // 得到一个option
+                }
+                
+                mStringUnescaper.Reset(arg);
+                mStringUnescaper.SetCharMapping(mOptionCharMapping);
+                if (_CheckOption(mStringUnescaper, out var optionType))
+                {
+                    if (optionType == OptionType.LongOption)
+                    {
+                        if (!mStringUnescaper.HasAnyChar())
+                        {// todo --结束符的逻辑
+                            continue;
+                        }
+                        
+                        _ParseOption(out var optionName, out var optionValue);
+                        if (optionValue != null)
+                        {
+                            // 得到一个option
+                        }
+                        else
+                        {
+                            parsingOptionName = optionName;
+                        }
+
+                        continue;
+                    }
+
+                    if (optionType == OptionType.ShortOption)
+                    {
+                        continue;
+                    }
                 }
             }
         }
 
-        private bool _CheckOption(StringUnescaper stringUnescaper, out OptionType? optionType)
+        private void _ParseOption(out string optionName, out string? optionValue)
+        {
+            mStringUnescaper.SetCharMapping(mEqualCharMapping);
+            
+            mStringBuilder.Clear();
+            while (mStringUnescaper.ReadChar(out var ch, out var value))
+            {
+                if (value == CTRL_EQUAL)
+                {
+                    optionName = mStringBuilder.ToString();
+
+                    mStringBuilder.Clear();
+                    mStringUnescaper.SetCharMapping(null);
+                    mStringUnescaper.ReadToEnd(mStringBuilder);
+
+                    optionValue = mStringBuilder.Length > 0 ? mStringBuilder.ToString() : "";
+
+                    return;
+                }
+                
+                mStringBuilder.Append(ch);
+            }
+            
+            optionName = mStringBuilder.ToString();
+            optionValue = null;
+        }
+
+        private bool _CheckOption(out OptionType? optionType)
         {
             optionType = null;
-            if (stringUnescaper.ReadChar(out var _, out var value) && value == CTRL_OPTION)
+            
+            if (mStringUnescaper.ReadChar(out var _, out var value) && value == CTRL_OPTION)
             {
                 optionType = OptionType.ShortOption;
             }
-            if (stringUnescaper.ReadChar(out var _, out value) && value == CTRL_OPTION)
+            else
             {
-                optionType = OptionType.LongOption;
+                mStringUnescaper.MovePrev();
+            }
+            
+            if (optionType == OptionType.ShortOption)
+            {
+                if (mStringUnescaper.ReadChar(out var _, out value) && value == CTRL_OPTION)
+                {
+                    optionType = OptionType.LongOption;
+                }
+                else
+                {
+                    mStringUnescaper.MovePrev();
+                }
+                
             }
             
             return optionType != null;
