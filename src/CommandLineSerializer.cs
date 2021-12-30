@@ -16,7 +16,7 @@ namespace Decoherence.CommandLineSerialization
             ShortOption,
         }
 
-        private const int CTRL_OPTION = 0;
+        private const int CTRL_HYPHEN = 0;
         private const int CTRL_EQUAL = 1;
         
         public string LongOptionPrefix => "--";
@@ -36,7 +36,7 @@ namespace Decoherence.CommandLineSerialization
             mSerializationStrategy = serializationStrategy ?? new SerializationStrategy();
             mStringUnescaper = new StringUnescaper();
             mStringBuilder = new StringBuilder();
-            mOptionCharMapping = new Dictionary<char, int>() { {'-', CTRL_OPTION} };
+            mOptionCharMapping = new Dictionary<char, int>() { {'-', CTRL_HYPHEN} };
             mEqualCharMapping = new Dictionary<char, int>() { {'=', CTRL_EQUAL} };
         }
         
@@ -50,6 +50,46 @@ namespace Decoherence.CommandLineSerialization
             ISpecs specs,
             Action<string> onRemainArg)
         {
+            /*
+             * 111 -ab123 -c 123 -b 123 222 --aaa=123 --bbb 123 --ccc= --ddd -- 333
+             * 
+             * parsingOptionName = null
+             * 解析option，遍历所有args
+             *   if arg是--
+             *     if parsingOptionName != null
+             *       得到无值option
+             *       parsingOptionName = null
+             *     break
+             * 
+             *   if parsingOptionName != null
+             *     得到有值option
+             *     消耗arg
+             *     parsingOptionName = null
+             *     continue
+             *
+             *   if arg是long option
+             *     解析long option，得到optionName, optionValue
+             *     消耗arg
+             *     if optionValue == null
+             *       parsingOptionName = optionName
+             *       continue
+             *     得到有值option
+             *     continue
+             *
+             *   if arg是short option
+             *     foreach shortOption in arg
+             *       得到shortOption
+             *     消耗 or 改变arg
+             *
+             * 解析argument，遍历所有args
+             *   if arg开头为-
+             *     continue
+             *   得到argument
+             *   消耗arg
+             *     
+             *     
+             */
+            
             string? parsingOptionName = null;
             foreach (var arg in args)
             {
@@ -121,7 +161,7 @@ namespace Decoherence.CommandLineSerialization
         {
             optionType = null;
             
-            if (mStringUnescaper.ReadChar(out var _, out var value) && value == CTRL_OPTION)
+            if (mStringUnescaper.ReadChar(out var _, out var value) && value == CTRL_HYPHEN)
             {
                 optionType = OptionType.ShortOption;
             }
@@ -132,7 +172,7 @@ namespace Decoherence.CommandLineSerialization
             
             if (optionType == OptionType.ShortOption)
             {
-                if (mStringUnescaper.ReadChar(out var _, out value) && value == CTRL_OPTION)
+                if (mStringUnescaper.ReadChar(out var _, out value) && value == CTRL_HYPHEN)
                 {
                     optionType = OptionType.LongOption;
                 }
