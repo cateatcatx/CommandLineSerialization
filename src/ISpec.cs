@@ -3,13 +3,16 @@ using System.Collections.Generic;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public interface ISpec
+    public interface ISpec : IValueSerializer
     {
-        Type objType { get; }
+        /// <summary>
+        /// 值对应的C#类型
+        /// </summary>
+        Type ObjType { get; }
         
-        object? DeserializeNoneValue();
-        object? DeserializeSingleValue(string? value);
-        object? DeserializeMultiValue(List<string> values);
-        object? DeserializeWhenNoMatch();
+        /// <summary>
+        /// 是否控制序列化和反序列化
+        /// </summary>
+        bool IsControlSerialization { get; }
     }
 }

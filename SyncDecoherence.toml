@@ -7,6 +7,7 @@ destiny = "src/Decoherence"
 # 要同步的路径
 sync_paths = [
     "Misc",
+	"SystemExtensions"
 ]
 
 # 同时时忽略的路径

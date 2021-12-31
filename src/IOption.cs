@@ -20,7 +20,7 @@ namespace Decoherence.CommandLineSerialization
 
         public int GetHashCode(IOption obj)
         {
-            obj.Name.GetHashCode(StringComparison.Ordinal);
+            return obj.Name.GetHashCode();
         }
     }
     

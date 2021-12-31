@@ -15,5 +15,16 @@ namespace Decoherence.SystemExtensions
 
             return value;
         }
+        
+        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value)
+        {
+            if (!self.ContainsKey(key))
+            {
+                self.Add(key, value);
+                return true;
+            }
+            
+            return false;
+        }
     }
 }

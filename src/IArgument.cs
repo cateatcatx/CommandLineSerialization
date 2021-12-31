@@ -8,7 +8,6 @@
     
     public interface IArgument : ISpec
     {
-        int Index { get; }
         ArgumentValueType ValueType { get; }
     }
 }

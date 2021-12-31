@@ -1,63 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
+using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-
-    public class Option : Spec
+    public class Option : Spec, IOption
     {
-        public static Option NewRequired(Type valueType,
-            OptionValueType valueType, 
-            string? longName = null, 
-            char? shortName = null,
-            SerializeFunc? customSerializeFunc = null, 
-            DeserializeFunc? customDeserializeFunc = null)
-        {
-            if (string.IsNullOrWhiteSpace(longName) && shortName == null)
-                throw new ArgumentException($"Specify at least one of both {nameof(longName)} and {nameof(shortName)}");
-
-            return new Option(valueType, valueType, longName, shortName, true, null, customSerializeFunc, customDeserializeFunc);
-        }
-        
-        public static Option NewOptional(Type valueType,
-            OptionValueType valueType, 
-            Func<object?> defaultValueCreator, 
-            string? longName = null, 
-            char? shortName = null,
-            SerializeFunc? customSerializeFunc = null, 
-            DeserializeFunc? customDeserializeFunc = null)
-        {
-            if (defaultValueCreator is null)
-                throw new ArgumentNullException(nameof(defaultValueCreator));
-            if (string.IsNullOrWhiteSpace(longName) && shortName == null)
-                throw new ArgumentException($"Specify at least one of both {nameof(longName)} and {nameof(shortName)}");
-
-            return new Option(valueType, valueType, longName, shortName, false, defaultValueCreator, customSerializeFunc, customDeserializeFunc);
-        }
-
+        public string Name { get; }
         public OptionValueType ValueType { get; }
 
-        public string? LongName { get; }
-        
-        public char? ShortName { get; }
-        
-        public override string Name => LongName ?? ShortName.ToString();
-        
-        
-
-        protected Option(Type valueType, 
+        public Option(
+            string longName, 
             OptionValueType valueType, 
-            string? longName, 
-            char? shortName, 
-            bool required, 
-            Func<object?>? defaultValueCreator,
-            SerializeFunc? customSerializeFunc,
-            DeserializeFunc? customDeserializeFunc)
-            : base(valueType, required, defaultValueCreator, customSerializeFunc, customDeserializeFunc)
+            Type objType,
+            IValueSerializer? valueSerializer = null)
+            : base(objType, valueSerializer)
         {
+            foreach (var ch in longName)
+            {
+                // 合法：字母、数字和-
+                if (!ch.IsAlpha() && !ch.IsDigit() && ch != '-')
+                    throw new ArgumentException($"'{longName}' is not a valid long option name.", nameof(longName));
+            }
+            
+            Name = longName;
             ValueType = valueType;
-            LongName = longName;
-            ShortName = shortName;
+        }
+        
+        public Option(
+            char shortName, 
+            OptionValueType valueType, 
+            Type objType,
+            IValueSerializer? valueSerializer = null)
+            : base(objType, valueSerializer)
+        {
+            if (!shortName.IsAlpha() && !shortName.IsDigit())
+                throw new ArgumentException($"'{shortName}' is not a valid short option name.", nameof(shortName));
+            
+            Name = shortName.ToString();
+            ValueType = valueType;
         }
     }
 }

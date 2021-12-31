@@ -1,55 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public class Specs
+    public class Specs : ISpecs
     {
-        public IEnumerable<Argument> Arguments => mArguments;
-        public IEnumerable<Option> Options => mOptions;
+        public IReadOnlyDictionary<string, IOption> Options => mOptions;
+        public IReadOnlyList<IArgument> Arguments => mArguments;
 
-        private readonly List<Argument> mArguments = new();
-        private readonly List<Option> mOptions = new();
-        
-        public Argument AddArgument(Argument argument)
+        private readonly Dictionary<string, IOption> mOptions = new();
+        private readonly List<IArgument> mArguments = new();
+
+        public void AddOption(Option option)
+        {
+            if (!mOptions.TryAdd(option.Name, option))
+            {
+                throw new ArgumentException($"Option with name '{option.Name}' already exists.");
+            }
+        }
+
+        public void AddArgument(Argument argument)
         {
             mArguments.Add(argument);
-            return argument;
-        }
-        
-        public Option AddOption(Option option)
-        {
-            if (option.ShortName != null && GetOptionByShortName(option.ShortName.Value) != null)
-            {
-                throw new ArgumentException($"Option with short name '-{option.ShortName}' already exists.");
-            }
-            if (option.LongName != null && GetOptionByLongName(option.LongName) != null)
-            {
-                throw new ArgumentException($"Option with long name '-{option.LongName}' already exists.");
-            }
-            
-            mOptions.Add(option);
-            return option;
-        }
-        
-        public Argument? GetArgument(int position)
-        {
-            if (position < 0 || position >= mArguments.Count)
-            {
-                return null;
-            }
-
-            return mArguments[position];
-        }
-
-        public Option? GetOptionByShortName(char shortName)
-        {
-            return mOptions.Find(option => option.ShortName == shortName);
-        }
-        
-        public Option? GetOptionByLongName(string longName)
-        {
-            return mOptions.Find(option => option.LongName == longName);
         }
     }
 }
