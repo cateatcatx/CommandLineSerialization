@@ -207,7 +207,7 @@ namespace Decoherence.CommandLineSerialization
             List<Option> options = new(specs.Options);
             
             // 按switch、scalar、sequence排序，这样可以保证在处理ShortName时先消耗掉Switch，这样合法的Scalar和Sequence就在最后了
-            options.Sort((a, b) => (int)a.Type - (int)b.Type);
+            options.Sort((a, b) => (int)a.ValueType - (int)b.ValueType);
             
             // 逐个解析每个option
             foreach (var option in options)
@@ -221,11 +221,11 @@ namespace Decoherence.CommandLineSerialization
                 }
                 else
                 {
-                    if (option.Type == OptionType.Switch)
+                    if (option.ValueType == OptionType.Switch)
                     {
                         optionMatch!.ConsumeArgs(remainArgs);
                     }
-                    else if (option.Type == OptionType.Scalar)
+                    else if (option.ValueType == OptionType.Scalar)
                     {
                         valueArgHelpList.Clear();
                         matchedValueArgs = valueArgHelpList;
@@ -238,7 +238,7 @@ namespace Decoherence.CommandLineSerialization
                         valueArgHelpList.Add(optionMatch!.ValueArg);
                         optionMatch!.ConsumeArgs(remainArgs);
                     }
-                    else if (option.Type == OptionType.Sequence)
+                    else if (option.ValueType == OptionType.Sequence)
                     {
                         valueArgHelpList.Clear();
                         matchedValueArgs = valueArgHelpList;
@@ -266,7 +266,7 @@ namespace Decoherence.CommandLineSerialization
                         }
                     }
 
-                    value = DeserializeValue(option.ValueType, matchedValueArgs);
+                    value = DeserializeValue(((Spec)option).ValueType, matchedValueArgs);
                 }
 
                 values.AddValue(option, value);

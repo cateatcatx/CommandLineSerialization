@@ -3,17 +3,11 @@ using System.Collections.Generic;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public enum OptionType
-    {
-        Switch,
-        Scalar,
-        Sequence,
-    }
-    
+
     public class Option : Spec
     {
         public static Option NewRequired(Type valueType,
-            OptionType type, 
+            OptionValueType valueType, 
             string? longName = null, 
             char? shortName = null,
             SerializeFunc? customSerializeFunc = null, 
@@ -22,11 +16,11 @@ namespace Decoherence.CommandLineSerialization
             if (string.IsNullOrWhiteSpace(longName) && shortName == null)
                 throw new ArgumentException($"Specify at least one of both {nameof(longName)} and {nameof(shortName)}");
 
-            return new Option(valueType, type, longName, shortName, true, null, customSerializeFunc, customDeserializeFunc);
+            return new Option(valueType, valueType, longName, shortName, true, null, customSerializeFunc, customDeserializeFunc);
         }
         
         public static Option NewOptional(Type valueType,
-            OptionType type, 
+            OptionValueType valueType, 
             Func<object?> defaultValueCreator, 
             string? longName = null, 
             char? shortName = null,
@@ -38,10 +32,10 @@ namespace Decoherence.CommandLineSerialization
             if (string.IsNullOrWhiteSpace(longName) && shortName == null)
                 throw new ArgumentException($"Specify at least one of both {nameof(longName)} and {nameof(shortName)}");
 
-            return new Option(valueType, type, longName, shortName, false, defaultValueCreator, customSerializeFunc, customDeserializeFunc);
+            return new Option(valueType, valueType, longName, shortName, false, defaultValueCreator, customSerializeFunc, customDeserializeFunc);
         }
 
-        public OptionType Type { get; }
+        public OptionValueType ValueType { get; }
 
         public string? LongName { get; }
         
@@ -52,7 +46,7 @@ namespace Decoherence.CommandLineSerialization
         
 
         protected Option(Type valueType, 
-            OptionType type, 
+            OptionValueType valueType, 
             string? longName, 
             char? shortName, 
             bool required, 
@@ -61,7 +55,7 @@ namespace Decoherence.CommandLineSerialization
             DeserializeFunc? customDeserializeFunc)
             : base(valueType, required, defaultValueCreator, customSerializeFunc, customDeserializeFunc)
         {
-            Type = type;
+            ValueType = valueType;
             LongName = longName;
             ShortName = shortName;
         }
