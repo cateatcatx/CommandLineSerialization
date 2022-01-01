@@ -52,9 +52,19 @@ namespace Decoherence.CommandLineSerialization.Test
         }
         
         [Test]
-        public void TestParmArray()
+        public void TestParamArrayViaArgument()
         {
             var ret = _Invoke(nameof(TestingMethods.Foo4), "1 2 3", out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
+        }
+        
+        [Test]
+        public void TestParamArrayViaOption()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo5), "1 -b2 3", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "", tmp);

@@ -23,5 +23,10 @@ namespace Decoherence.CommandLineSerialization.Test
         {
             return $"{a},{string.Join(',', b)}";
         }
+        
+        public static string Foo5(int a, [Option] params int[] b)
+        {
+            return $"{a},{string.Join(',', b)}";
+        }
     }
 }
