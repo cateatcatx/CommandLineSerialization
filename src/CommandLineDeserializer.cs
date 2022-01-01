@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Decoherence.SystemExtensions;
@@ -11,18 +12,10 @@ namespace Decoherence.CommandLineSerialization
     public class CommandLineDeserializer
     {
         private readonly IValueSerializer mValueSerializer;
-        private readonly Dictionary<IOption, List<string>> mParsingMultiValueOptions;
-        private readonly StringBuilder mShortOptionHolder;
-        private readonly HashSet<IOption> mParsedOptions;
-        private readonly List<string> mParsingArgumentValues;
 
         public CommandLineDeserializer(IValueSerializer? valueSerializer = null)
         {
             mValueSerializer = valueSerializer ?? new BuiltinValueSerializer();
-            mParsingMultiValueOptions = new Dictionary<IOption, List<string>>(new OptionEqualityComparer());
-            mShortOptionHolder = new StringBuilder();
-            mParsedOptions = new HashSet<IOption>(new OptionEqualityComparer());
-            mParsingArgumentValues = new List<string>();
         }
 
         /// <summary>
@@ -52,12 +45,46 @@ namespace Decoherence.CommandLineSerialization
             return argList;
         }
 
+        /// <summary>
+        /// 用命令行参数调用函数
+        /// </summary>
+        /// <param name="method">函数</param>
+        /// <param name="args">命令行参数</param>
+        /// <param name="remainArgs">调用后剩余的参数</param>
+        /// <returns>函数返回值</returns>
+        public object? InvokeMethod(MethodBase method, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        {
+            MethodSpecs methodSpecs = new(method);
+            methodSpecs.AnalyseMethod();
+
+            Dictionary<ISpec, object?> specParameters = new();
+            remainArgs = Deserialize(args, methodSpecs,
+                (option, obj) =>
+                {
+                    if (methodSpecs.IsParameterSpec(option))
+                    {
+                        specParameters.Add(option, obj);
+                    }
+                },
+                (argument, obj) =>
+                {
+                    if (methodSpecs.IsParameterSpec(argument))
+                    {
+                        specParameters.Add(argument, obj);
+                    }
+                });
+            
+            return methodSpecs.Invoke(null, specParameters);
+        }
+
         private LinkedListNode<string>? _ParseOptions(LinkedListNode<string>? node, ISpecs specs, Action<IOption, object?>? optionDeserialized)
         {
-            mParsingMultiValueOptions.Clear();
-            mParsedOptions.Clear();
+            Dictionary<IOption, List<string>> parsingMultiValueOptions = new();
+            StringBuilder shortOptionHolder = new();
+            HashSet<IOption> parsedOptions = new();
             LinkedListNode<string>? nodeAfterDemarcate = null;
             IOption? parsingOption = null;
+            var options = specs.Options;
             
             while (node != null)
             {
@@ -68,7 +95,7 @@ namespace Decoherence.CommandLineSerialization
                 {// 处理"--"
                     if (parsingOption != null)
                     {
-                        _ParseParsingOption(null, optionDeserialized, parsingOption);
+                        _ParseParsingOption(null, optionDeserialized, parsingOption, parsingMultiValueOptions);
                     }
 
                     nodeAfterDemarcate = node.Next;
@@ -77,7 +104,7 @@ namespace Decoherence.CommandLineSerialization
 
                 if (parsingOption != null)
                 {// 这里优先解析parsingOption的Value，就算当前arg由-开头（比如-a、--aaa）也当做value处理
-                    parsingOption = _ParseParsingOption(arg, optionDeserialized, parsingOption);
+                    parsingOption = _ParseParsingOption(arg, optionDeserialized, parsingOption, parsingMultiValueOptions);
                     node = _ConsumeNode(node);
                     continue;
                 }
@@ -87,9 +114,9 @@ namespace Decoherence.CommandLineSerialization
                     var optionName = m.Groups[3].Value;
                     var appendedValue = m.Groups[4].Value == "=" ? m.Groups[5].Value : null; // 有"="时可能空值可能有值，没有则为null
                     
-                    if (_TryGetOption(optionName, specs, out var option))
+                    if (_TryGetOption(optionName, options, parsedOptions, out var option))
                     {
-                        _DeserializeOption(optionDeserialized, option, appendedValue, ref parsingOption);
+                        _DeserializeOption(optionDeserialized, option, appendedValue, parsingMultiValueOptions, ref parsingOption);
                     }
 
                     node = _ConsumeNode(node);
@@ -98,37 +125,37 @@ namespace Decoherence.CommandLineSerialization
 
                 if (_IsShortOption(m))
                 {
-                    mShortOptionHolder.Clear();
-                    mShortOptionHolder.Append(arg);
+                    shortOptionHolder.Clear();
+                    shortOptionHolder.Append(arg);
                     
-                    for (int i = 1; i < mShortOptionHolder.Length; ++i)
+                    for (int i = 1; i < shortOptionHolder.Length; ++i)
                     {
-                        if (_TryGetOption(mShortOptionHolder[i].ToString(), specs, out var option))
+                        if (_TryGetOption(shortOptionHolder[i].ToString(), options, parsedOptions, out var option))
                         {
-                            int removeCount = mShortOptionHolder.Length - i;
+                            int removeCount = shortOptionHolder.Length - i;
                             string? appendedValue = null;
                             
                             if (option.ValueType == OptionValueType.None)
                             {
                                 removeCount = 1;
                             }
-                            else if (i < mShortOptionHolder.Length - 1)
+                            else if (i < shortOptionHolder.Length - 1)
                             {// 只要不是NoneValue，在后面还有字符的情况下，都要把字符吃光变成值
-                                appendedValue = mShortOptionHolder.ToString(i + 1, mShortOptionHolder.Length - (i + 1));
+                                appendedValue = shortOptionHolder.ToString(i + 1, shortOptionHolder.Length - (i + 1));
                             }
 
-                            _DeserializeOption(optionDeserialized, option, appendedValue, ref parsingOption);
-                            mShortOptionHolder.Remove(i, removeCount);
+                            _DeserializeOption(optionDeserialized, option, appendedValue, parsingMultiValueOptions, ref parsingOption);
+                            shortOptionHolder.Remove(i, removeCount);
                         }
                     }
 
-                    if (mShortOptionHolder.Length <= 1)
+                    if (shortOptionHolder.Length <= 1)
                     {
                         node = _ConsumeNode(node);
                     }
                     else
                     {
-                        node.Value = mShortOptionHolder.ToString();
+                        node.Value = shortOptionHolder.ToString();
                         node = node.Next;
                     }
                     
@@ -139,16 +166,16 @@ namespace Decoherence.CommandLineSerialization
             }
             
             // 处理多值option
-            foreach (var option2values in mParsingMultiValueOptions)
+            foreach (var option2values in parsingMultiValueOptions)
             {
                 var option = option2values.Key;
                 var values = option2values.Value;
                 optionDeserialized?.Invoke(option, _DeserializeMultiValue(option, values));
-                mParsedOptions.Add(option);
+                parsedOptions.Add(option);
             }
             
             // 处理未匹配的option
-            foreach (var option in specs.Options.Values.Where(option => !mParsedOptions.Contains(option)))
+            foreach (var option in options.Values.Where(option => !parsedOptions.Contains(option)))
             {
                 optionDeserialized?.Invoke(option, _DeserializeWhenNoMatch(option));
             }
@@ -161,9 +188,10 @@ namespace Decoherence.CommandLineSerialization
             if (specs.Arguments.Count <= 0)
                 return;
 
-            mParsingArgumentValues.Clear();
-            var i = 0;
+            var arguments = specs.Arguments;
+            List<string> parsingArgumentValues = new();
             IArgument? parsingArgument = null;
+            var i = 0;
             var node = nodeAfterDemarcate ?? argList.First;
             while (node != null)
             {
@@ -178,19 +206,19 @@ namespace Decoherence.CommandLineSerialization
 
                 if (parsingArgument != null)
                 {
-                    mParsingArgumentValues.Add(arg);
+                    parsingArgumentValues.Add(arg);
                     node = _ConsumeNode(node);
                     continue;
                 }
 
-                var argument = specs.Arguments[i++];
+                var argument = arguments[i++];
                 if (argument.ValueType == ArgumentValueType.Single)
                 {
                     argumentDeserialized?.Invoke(argument, _DeserializeSingleValue(argument, arg));
                 }
                 else if (argument.ValueType == ArgumentValueType.Sequence)
                 {
-                    mParsingArgumentValues.Add(arg);
+                    parsingArgumentValues.Add(arg);
                     parsingArgument = null;
                 }
 
@@ -200,18 +228,18 @@ namespace Decoherence.CommandLineSerialization
             // 处理多值argument
             if (parsingArgument != null)
             {
-                argumentDeserialized?.Invoke(parsingArgument, _DeserializeMultiValue(parsingArgument, mParsingArgumentValues));
+                argumentDeserialized?.Invoke(parsingArgument, _DeserializeMultiValue(parsingArgument, parsingArgumentValues));
             }
             
             // 处理剩余arguments
-            for (; i < specs.Arguments.Count; ++i)
+            for (; i < arguments.Count; ++i)
             {
-                var argument = specs.Arguments[i];
+                var argument = arguments[i];
                 argumentDeserialized?.Invoke(argument, _DeserializeWhenNoMatch(argument));
             }
         }
         
-        private IOption? _ParseParsingOption(string? arg, Action<IOption, object?>? optionDeserialized, IOption parsingOption)
+        private IOption? _ParseParsingOption(string? arg, Action<IOption, object?>? optionDeserialized, IOption parsingOption, Dictionary<IOption, List<string>> parsingMultiValueOptions)
         {
             if (parsingOption.ValueType == OptionValueType.Single)
             {
@@ -222,7 +250,7 @@ namespace Decoherence.CommandLineSerialization
             if (parsingOption.ValueType is OptionValueType.Multi or OptionValueType.Sequence)
             {
                 if (arg != null)
-                    mParsingMultiValueOptions[parsingOption].Add(arg);
+                    parsingMultiValueOptions[parsingOption].Add(arg);
 
                 if (parsingOption.ValueType is OptionValueType.Multi)
                 {
@@ -233,15 +261,15 @@ namespace Decoherence.CommandLineSerialization
             return parsingOption;
         }
         
-        private bool _TryGetOption(string optionName, ISpecs specs, [NotNullWhen(true)] out IOption? option)
+        private bool _TryGetOption(string optionName, IReadOnlyDictionary<string, IOption> options, HashSet<IOption> parsedOptions, [NotNullWhen(true)] out IOption? option)
         {
-            if (specs.Options.TryGetValue(optionName, out option))
+            if (options.TryGetValue(optionName, out option))
             {
-                if (!mParsedOptions.Contains(option))
+                if (!parsedOptions.Contains(option))
                 {
                     if (option.ValueType != OptionValueType.Multi)
                     {// -a1 -a2 -a3 可以匹配多次
-                        mParsedOptions.Add(option);
+                        parsedOptions.Add(option);
                     }
 
                     return true;
@@ -251,7 +279,7 @@ namespace Decoherence.CommandLineSerialization
             return false;
         }
 
-        private void _DeserializeOption(Action<IOption, object?>? optionDeserialized, IOption option, string? value, ref IOption? parsingOption)
+        private void _DeserializeOption(Action<IOption, object?>? optionDeserialized, IOption option, string? value, Dictionary<IOption, List<string>> parsingMultiValueOptions, ref IOption? parsingOption)
         {
             if (option.ValueType == OptionValueType.None)
             {
@@ -270,7 +298,7 @@ namespace Decoherence.CommandLineSerialization
             }
             else if (option.ValueType is OptionValueType.Multi or OptionValueType.Sequence)
             {
-                var values = mParsingMultiValueOptions.AddOrCreateValue(option, () => new List<string>());
+                var values = parsingMultiValueOptions.AddOrCreateValue(option, () => new List<string>());
                 if (value != null)
                 {
                     values.Add(value);

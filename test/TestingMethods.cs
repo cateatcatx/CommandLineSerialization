@@ -1,6 +1,6 @@
 ﻿namespace Decoherence.CommandLineSerialization.Test
 {
-    public class MethodsForTest
+    public class TestingMethods
     {
         public static string Foo1(int a, int b)
         {
