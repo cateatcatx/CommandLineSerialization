@@ -5,16 +5,26 @@ namespace Decoherence.CommandLineSerialization.Attributes
     public abstract class SpecAttribute : Attribute
     {
         public IValueSerializer? Serializer => 
-            mValueSerializerType == null ? null : (IValueSerializer)Activator.CreateInstance(mValueSerializerType);
+            ValueSerializerType == null ? null : (IValueSerializer)Activator.CreateInstance(ValueSerializerType);
 
-        private readonly Type? mValueSerializerType;
-
-        protected SpecAttribute(Type? valueSerializerType)
+        public Type? ValueSerializerType
         {
-            if (valueSerializerType != null && ImplUtils.IsValidValueSerializerType(valueSerializerType))
-                throw ImplUtils.NewInvalidValueSerializerTypeException(valueSerializerType, nameof(valueSerializerType));
-            
-            mValueSerializerType = valueSerializerType;
+            get => mValueSerializerType;
+            set
+            {
+                if (value != null && !ImplUtils.IsValidValueSerializerType(value))
+                    throw new ArgumentException(ImplUtils.InvalidValueSerializerTypeError(value));
+                mValueSerializerType = value;
+            }
         }
+
+        public abstract ValueType ValueType
+        {
+            get;
+            set;
+        }
+
+        private Type? mValueSerializerType;
+        protected ValueType mValueType;
     }
 }

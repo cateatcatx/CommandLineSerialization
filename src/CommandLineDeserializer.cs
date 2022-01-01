@@ -131,12 +131,12 @@ namespace Decoherence.CommandLineSerialization
                             int removeCount = shortOptionHolder.Length - i;
                             string? appendedValue = null;
                             
-                            if (option.ValueType == OptionValueType.None)
+                            if (option.ValueType == ValueType.Non)
                             {
                                 removeCount = 1;
                             }
                             else if (i < shortOptionHolder.Length - 1)
-                            {// 只要不是NoneValue，在后面还有字符的情况下，都要把字符吃光变成值
+                            {// 只要不是NonValue，在后面还有字符的情况下，都要把字符吃光变成值
                                 appendedValue = shortOptionHolder.ToString(i + 1, shortOptionHolder.Length - (i + 1));
                             }
 
@@ -218,11 +218,11 @@ namespace Decoherence.CommandLineSerialization
                 }
 
                 var argument = arguments[i++];
-                if (argument.ValueType == ArgumentValueType.Single)
+                if (argument.ValueType == ValueType.Single)
                 {
                     onDeserialized?.Invoke(argument, _DeserializeSingleValue(argument, arg));
                 }
-                else if (argument.ValueType == ArgumentValueType.Sequence)
+                else if (argument.ValueType == ValueType.Sequence)
                 {
                     parsingArgumentValues.Add(arg);
                     parsingArgument = argument;
@@ -247,18 +247,18 @@ namespace Decoherence.CommandLineSerialization
         
         private IOption? _ParseParsingOption(string? arg, OnDeserialized? onDeserialized, IOption parsingOption, Dictionary<IOption, List<string>> parsingMultiValueOptions)
         {
-            if (parsingOption.ValueType == OptionValueType.Single)
+            if (parsingOption.ValueType == ValueType.Single)
             {
                 onDeserialized?.Invoke(parsingOption, _DeserializeSingleValue(parsingOption, arg));
                 return null;
             }
             
-            if (parsingOption.ValueType is OptionValueType.Multi or OptionValueType.Sequence)
+            if (parsingOption.ValueType is ValueType.Multi or ValueType.Sequence)
             {
                 if (arg != null)
                     parsingMultiValueOptions[parsingOption].Add(arg);
 
-                if (parsingOption.ValueType is OptionValueType.Multi)
+                if (parsingOption.ValueType is ValueType.Multi)
                 {
                     return null;
                 }
@@ -273,7 +273,7 @@ namespace Decoherence.CommandLineSerialization
             {
                 if (!parsedOptions.Contains(option))
                 {
-                    if (option.ValueType != OptionValueType.Multi)
+                    if (option.ValueType != ValueType.Multi)
                     {// -a1 -a2 -a3 可以匹配多次
                         parsedOptions.Add(option);
                     }
@@ -287,11 +287,11 @@ namespace Decoherence.CommandLineSerialization
 
         private void _DeserializeOption(OnDeserialized? onDeserialized, IOption option, string? value, Dictionary<IOption, List<string>> parsingMultiValueOptions, ref IOption? parsingOption)
         {
-            if (option.ValueType == OptionValueType.None)
+            if (option.ValueType == ValueType.Non)
             {
-                onDeserialized?.Invoke(option, _DeserializeNoneValue(option));
+                onDeserialized?.Invoke(option, _DeserializeNonValue(option));
             }
-            else if (option.ValueType == OptionValueType.Single)
+            else if (option.ValueType == ValueType.Single)
             {
                 if (value != null)
                 {
@@ -302,7 +302,7 @@ namespace Decoherence.CommandLineSerialization
                     parsingOption = option;
                 }
             }
-            else if (option.ValueType is OptionValueType.Multi or OptionValueType.Sequence)
+            else if (option.ValueType is ValueType.Multi or ValueType.Sequence)
             {
                 var values = parsingMultiValueOptions.AddOrCreateValue(option, () => new List<string>());
                 if (value != null)
@@ -310,7 +310,7 @@ namespace Decoherence.CommandLineSerialization
                     values.Add(value);
                 }
 
-                if (value == null || option.ValueType == OptionValueType.Sequence)
+                if (value == null || option.ValueType == ValueType.Sequence)
                 {
                     parsingOption = option;
                 }
@@ -361,9 +361,9 @@ namespace Decoherence.CommandLineSerialization
             return !match.Success || match.Groups[1].Value != "-";
         }
         
-        private object? _DeserializeNoneValue(ISpec spec)
+        private object? _DeserializeNonValue(ISpec spec)
         {
-            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNoneValue(spec.ObjType) : mValueSerializer.DeserializeNoneValue(spec.ObjType);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNonValue(spec.ObjType) : mValueSerializer.DeserializeNonValue(spec.ObjType);
         }
 
         private object? _DeserializeSingleValue(ISpec spec, string? value)

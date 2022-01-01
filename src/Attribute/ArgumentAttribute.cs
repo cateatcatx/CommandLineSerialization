@@ -4,12 +4,16 @@ namespace Decoherence.CommandLineSerialization.Attributes
 {
     public class ArgumentAttribute : SpecAttribute
     {
-        public ArgumentValueType? ValueType { get; }
-
-        public ArgumentAttribute(ArgumentValueType? valueType = null, Type? valueSerializerType = null) 
-            : base(valueSerializerType)
+        public override ValueType ValueType
         {
-            ValueType = valueType;
+            get => mValueType;
+            set
+            {
+                if (value != ValueType.Default && !ImplUtils.IsValidArgumentValueType(value))
+                    throw new ArgumentException(ImplUtils.InvalidArgumentValueTypeError(value));
+
+                mValueType = value;
+            }
         }
     }
 }

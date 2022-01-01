@@ -10,7 +10,7 @@ namespace Decoherence.CommandLineSerialization
             return objType == typeof(int);
         }
 
-        public object? DeserializeNoneValue(Type objType)
+        public object? DeserializeNonValue(Type objType)
         {
             throw new InvalidOperationException();
         }

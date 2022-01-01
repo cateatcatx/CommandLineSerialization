@@ -9,7 +9,7 @@ namespace Decoherence.CommandLineSerialization.Test
             return $"{a},{b}";
         }
 
-        public static string Foo2(int a, [Option()] int b, [Option(name: "ccc")] int c, int d)
+        public static string Foo2(int a, [Option] int b, [Option(Name = "ccc")] int c, int d)
         {
             return $"{a},{b},{c},{d}";
         }

@@ -10,7 +10,7 @@ namespace Decoherence.CommandLineSerialization
             return !objType.IsPrimitive;
         }
 
-        public object? DeserializeNoneValue(Type objType)
+        public object? DeserializeNonValue(Type objType)
         {
             throw new InvalidOperationException();
         }

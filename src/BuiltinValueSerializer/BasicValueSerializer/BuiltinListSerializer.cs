@@ -11,7 +11,7 @@ namespace Decoherence.CommandLineSerialization
             return typeof(IList).IsAssignableFrom(objType);
         }
 
-        public object? DeserializeNoneValue(Type objType)
+        public object? DeserializeNonValue(Type objType)
         {
             return null;
         }

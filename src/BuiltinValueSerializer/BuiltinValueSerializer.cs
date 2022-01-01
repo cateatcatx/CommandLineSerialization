@@ -31,14 +31,14 @@ namespace Decoherence.CommandLineSerialization
             throw new NotImplementedException();
         }
 
-        public object? DeserializeNoneValue(Type objType)
+        public object? DeserializeNonValue(Type objType)
         {
             if (!_TryGetSerializer(objType, out var serializer))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeNoneValue(objType);
+            return serializer.DeserializeNonValue(objType);
         }
 
         public object? DeserializeSingleValue(Type objType, string? value)

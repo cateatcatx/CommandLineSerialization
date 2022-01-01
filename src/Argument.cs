@@ -5,12 +5,11 @@ namespace Decoherence.CommandLineSerialization
 {
     public class Argument : Spec, IArgument
     {
-        public ArgumentValueType ValueType { get; }
-
-        public Argument(ArgumentValueType valueType, Type objType, IValueSerializer? valueSerializer = null)
-            : base(objType, valueSerializer)
+        public Argument(ValueType valueType, Type objType, IValueSerializer? valueSerializer = null)
+            : base(valueType, objType, valueSerializer)
         {
-            ValueType = valueType;
+            if (!ImplUtils.IsValidArgumentValueType(valueType))
+                throw new ArgumentException(ImplUtils.InvalidArgumentValueTypeError(valueType), nameof(valueType));
         }
     }
 }

@@ -5,12 +5,14 @@ namespace Decoherence.CommandLineSerialization
 {
     public abstract class Spec : ISpec
     {
+        public ValueType ValueType { get; }
         public Type ObjType { get; }
 
         protected readonly IValueSerializer? mValueSerializer;
 
-        protected Spec(Type objType, IValueSerializer? valueSerializer)
+        protected Spec(ValueType valueType, Type objType, IValueSerializer? valueSerializer)
         {
+            ValueType = valueType;
             ObjType = objType;
             mValueSerializer = valueSerializer;
         }
@@ -20,12 +22,12 @@ namespace Decoherence.CommandLineSerialization
             return mValueSerializer != null && objType == ObjType;
         }
 
-        public object? DeserializeNoneValue(Type objType)
+        public object? DeserializeNonValue(Type objType)
         {
             if (mValueSerializer == null)
                 throw _NewInvalidOperationException();
             
-            return mValueSerializer.DeserializeNoneValue(objType);
+            return mValueSerializer.DeserializeNonValue(objType);
         }
 
         public object? DeserializeSingleValue(Type objType, string? value)
