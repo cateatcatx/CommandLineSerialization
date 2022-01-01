@@ -48,7 +48,7 @@ namespace Decoherence.CommandLineSerialization
             foreach (var paramInfo in parameters)
             {
                 var attr = paramInfo.GetCustomAttribute<SpecAttribute>();
-                ISpec spec = attr != null ? attr.GenerateSpec(paramInfo.Name, paramInfo.ParameterType) : new Argument(_GetDefaultArgumentValueType(paramInfo), paramInfo.ParameterType);
+                ISpec spec = _GenerateSpec(attr, paramInfo);
                 mSpecs.Add(spec);
             }
         }
@@ -89,10 +89,25 @@ namespace Decoherence.CommandLineSerialization
             return Method.Invoke(obj, parameters);
         }
 
-        private ArgumentValueType _GetDefaultArgumentValueType(ParameterInfo paramInfo)
+        private ISpec _GenerateSpec(SpecAttribute? attr, ParameterInfo paramInfo)
         {
-            // 只有params的参数是Sequence
-            return paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ArgumentValueType.Sequence : ArgumentValueType.Single;
+            if (attr is null or ArgumentAttribute)
+            {
+                ArgumentAttribute? argumentAttr = null;
+                if (attr != null)
+                {
+                    argumentAttr = (ArgumentAttribute)attr;
+                }
+                
+                // params的参数是Sequence
+                var argumentValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ArgumentValueType.Sequence : ArgumentValueType.Single;
+                return new Argument(argumentAttr?.ValueType ?? argumentValueType, paramInfo.ParameterType, argumentAttr?.Serializer);
+            }
+
+            var optionAttr = (OptionAttribute)attr;
+            // params的参数是Sequence
+            var optionValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? OptionValueType.Sequence : OptionValueType.Single;
+            return new Option(optionAttr.Name ?? paramInfo.Name, optionAttr.ValueType ?? optionValueType, paramInfo.ParameterType, optionAttr.Serializer);
         }
     }
 }

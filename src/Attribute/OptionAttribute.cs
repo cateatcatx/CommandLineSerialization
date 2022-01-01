@@ -4,10 +4,10 @@ namespace Decoherence.CommandLineSerialization.Attributes
 {
     public class OptionAttribute : SpecAttribute
     {
-        public string? Name { get; }
-        public OptionValueType ValueType { get; }
+        public string? Name { get; set; }
+        public OptionValueType? ValueType { get; set; }
         
-        public OptionAttribute(string? name = null, OptionValueType valueType = OptionValueType.Single, Type? valueSerializerType = null)
+        public OptionAttribute(Type? valueSerializerType = null)
             : base(valueSerializerType)
         {
             if (name != null)
@@ -26,17 +26,6 @@ namespace Decoherence.CommandLineSerialization.Attributes
 
             Name = name;
             ValueType = valueType;
-        }
-
-        public override Spec GenerateSpec(string fieldName, Type objType)
-        {
-            IValueSerializer? serializer = null;
-            if (ValueSerializerType != null)
-            {
-                serializer = (IValueSerializer)Activator.CreateInstance(ValueSerializerType);
-            }
-
-            return new Option(Name ?? fieldName, ValueType, objType, serializer);
         }
     }
 }

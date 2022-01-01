@@ -4,17 +4,12 @@ namespace Decoherence.CommandLineSerialization.Attributes
 {
     public class ArgumentAttribute : SpecAttribute
     {
-        public ArgumentValueType ValueType { get; }
+        public ArgumentValueType? ValueType { get; }
 
-        public ArgumentAttribute(ArgumentValueType valueType, Type? valueSerializerType = null) 
+        public ArgumentAttribute(ArgumentValueType? valueType = null, Type? valueSerializerType = null) 
             : base(valueSerializerType)
         {
             ValueType = valueType;
-        }
-
-        public override Spec GenerateSpec(string fieldName, Type objType)
-        {
-            return new Argument(ValueType, objType, ValueSerializerType != null ? (IValueSerializer)Activator.CreateInstance(ValueSerializerType) : null);
         }
     }
 }
