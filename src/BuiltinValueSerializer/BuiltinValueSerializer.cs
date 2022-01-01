@@ -5,21 +5,37 @@ namespace Decoherence.CommandLineSerialization
 {
     public class BuiltinValueSerializer : IValueSerializer
     {
-        private readonly Dictionary<Type, IValueSerializer> mSerializers;
+        private readonly List<IValueSerializer> mSerializer;
+        private readonly Dictionary<Type, IValueSerializer> mType2Serializer;
 
         public BuiltinValueSerializer()
         {
-            mSerializers = new Dictionary<Type, IValueSerializer>()
+            BuiltinIntSerializer builtinIntSerializer = new();
+            
+            mSerializer = new List<IValueSerializer>()
             {
-                {typeof(int), new BuiltinIntSerializer()},
+                builtinIntSerializer,
+                new BuiltinListSerializer(),
+                new BuiltinObjectSerializer(),
+            };
+            
+            // 预cache
+            mType2Serializer = new Dictionary<Type, IValueSerializer>()
+            {
+                {typeof(int), builtinIntSerializer},
             };
         }
-        
+
+        public bool CanHandleType(Type objType)
+        {
+            throw new NotImplementedException();
+        }
+
         public object? DeserializeNoneValue(Type objType)
         {
-            if (!mSerializers.TryGetValue(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serializer))
             {
-                throw _NewCantException(objType);
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
             return serializer.DeserializeNoneValue(objType);
@@ -27,9 +43,9 @@ namespace Decoherence.CommandLineSerialization
 
         public object? DeserializeSingleValue(Type objType, string? value)
         {
-            if (!mSerializers.TryGetValue(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serializer))
             {
-                throw _NewCantException(objType);
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
             return serializer.DeserializeSingleValue(objType, value);
@@ -37,17 +53,37 @@ namespace Decoherence.CommandLineSerialization
 
         public object? DeserializeMultiValue(Type objType, List<string> values)
         {
-            if (!mSerializers.TryGetValue(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serializer))
             {
-                throw _NewCantException(objType);
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
             return serializer.DeserializeMultiValue(objType, values);
         }
 
-        private InvalidOperationException _NewCantException(Type objType)
+        private bool _TryGetSerializer(Type objType, out IValueSerializer serializer)
         {
-            return new($"{nameof(BuiltinValueSerializer)} can not serialize or deserialize {objType}.");
+            if (mType2Serializer.TryGetValue(objType, out serializer))
+            {
+                return true;
+            }
+
+            foreach (var valueSerializer in mSerializer)
+            {
+                if (valueSerializer.CanHandleType(objType))
+                {
+                    mType2Serializer.Add(objType, valueSerializer);
+                    serializer = valueSerializer;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        
+        private string _GenCantSerializeErr(Type objType)
+        {
+            return $"{nameof(BuiltinValueSerializer)} can not serialize or deserialize {objType}.";
         }
     }
 }

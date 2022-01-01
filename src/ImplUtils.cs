@@ -4,7 +4,7 @@ using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public static class ImplHelper
+    public static class ImplUtils
     {
         public static bool IsValidOptionLongName(string longName)
         {

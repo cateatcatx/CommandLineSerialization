@@ -8,8 +8,8 @@ namespace Decoherence.CommandLineSerialization.Attributes
 
         protected SpecAttribute(Type? valueSerializerType)
         {
-            if (valueSerializerType != null && ImplHelper.IsValidValueSerializerType(valueSerializerType))
-                throw ImplHelper.NewInvalidValueSerializerTypeException(valueSerializerType, nameof(valueSerializerType));
+            if (valueSerializerType != null && ImplUtils.IsValidValueSerializerType(valueSerializerType))
+                throw ImplUtils.NewInvalidValueSerializerTypeException(valueSerializerType, nameof(valueSerializerType));
             
             ValueSerializerType = valueSerializerType;
         }

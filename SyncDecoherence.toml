@@ -10,6 +10,7 @@ sync_paths = [
 	"SystemExtensions/CharExtensions.cs",
 	"SystemExtensions/DictionaryExtensions.cs",
 	"SystemExtensions/StringExtensions.cs",
+	"Utils/ReflectUtils.cs",
 ]
 
 # 同时时忽略的路径

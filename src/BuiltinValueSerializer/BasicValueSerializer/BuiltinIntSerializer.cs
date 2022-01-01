@@ -5,6 +5,11 @@ namespace Decoherence.CommandLineSerialization
 {
     public class BuiltinIntSerializer : IValueSerializer
     {
+        public bool CanHandleType(Type objType)
+        {
+            return objType == typeof(int);
+        }
+
         public object? DeserializeNoneValue(Type objType)
         {
             throw new InvalidOperationException();

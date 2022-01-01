@@ -6,7 +6,6 @@ namespace Decoherence.CommandLineSerialization
     public abstract class Spec : ISpec
     {
         public Type ObjType { get; }
-        public bool IsControlSerialization => mValueSerializer != null;
 
         protected readonly IValueSerializer? mValueSerializer;
 
@@ -15,7 +14,12 @@ namespace Decoherence.CommandLineSerialization
             ObjType = objType;
             mValueSerializer = valueSerializer;
         }
-        
+
+        public bool CanHandleType(Type objType)
+        {
+            return mValueSerializer != null && objType == ObjType;
+        }
+
         public object? DeserializeNoneValue(Type objType)
         {
             if (mValueSerializer == null)

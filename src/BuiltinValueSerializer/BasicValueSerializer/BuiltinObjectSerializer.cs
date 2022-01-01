@@ -5,6 +5,11 @@ namespace Decoherence.CommandLineSerialization
 {
     public class BuiltinObjectSerializer : IValueSerializer
     {
+        public bool CanHandleType(Type objType)
+        {
+            return !objType.IsPrimitive;
+        }
+
         public object? DeserializeNoneValue(Type objType)
         {
             throw new InvalidOperationException();

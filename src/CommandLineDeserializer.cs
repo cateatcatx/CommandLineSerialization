@@ -225,7 +225,7 @@ namespace Decoherence.CommandLineSerialization
                 else if (argument.ValueType == ArgumentValueType.Sequence)
                 {
                     parsingArgumentValues.Add(arg);
-                    parsingArgument = null;
+                    parsingArgument = argument;
                 }
 
                 node = _ConsumeNode(node);
@@ -363,17 +363,17 @@ namespace Decoherence.CommandLineSerialization
         
         private object? _DeserializeNoneValue(ISpec spec)
         {
-            return spec.IsControlSerialization ? spec.DeserializeNoneValue(spec.ObjType) : mValueSerializer.DeserializeNoneValue(spec.ObjType);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNoneValue(spec.ObjType) : mValueSerializer.DeserializeNoneValue(spec.ObjType);
         }
 
         private object? _DeserializeSingleValue(ISpec spec, string? value)
         {
-            return spec.IsControlSerialization ? spec.DeserializeSingleValue(spec.ObjType, value) : mValueSerializer.DeserializeSingleValue(spec.ObjType, value);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeSingleValue(spec.ObjType, value) : mValueSerializer.DeserializeSingleValue(spec.ObjType, value);
         }
 
         private object? _DeserializeMultiValue(ISpec spec, List<string> values)
         {
-            return spec.IsControlSerialization ? spec.DeserializeMultiValue(spec.ObjType, values) : mValueSerializer.DeserializeMultiValue(spec.ObjType, values);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeMultiValue(spec.ObjType, values) : mValueSerializer.DeserializeMultiValue(spec.ObjType, values);
         }
     }
 }

@@ -15,10 +15,7 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestNormal()
         {
-            var commandline = "-abc1 1 -ccc2 2";
-            
-            CommandLineDeserializer deserializer = new();
-            var ret = deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(nameof(TestingMethods.Foo1))!, commandline.Split(' '), out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo1), "-abc1 1 -ccc2 2", out var remainArgs);
             
             Assert.True(string.Join(' ', remainArgs) == "-abc1 -ccc2");
             Assert.True(ret != null && (ret as string) == "1,2");
@@ -27,10 +24,7 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestAttr()
         {
-            var commandline = "--ccc 3 1 -b2 4";
-            
-            CommandLineDeserializer deserializer = new();
-            var ret = deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(nameof(TestingMethods.Foo2))!, commandline.Split(' '), out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo2), "--ccc 3 1 -b2 4", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "", tmp);
@@ -40,10 +34,7 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestUnInputDefaultParam()
         {
-            var commandline = "1 -a123";
-            
-            CommandLineDeserializer deserializer = new();
-            var ret = deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(nameof(TestingMethods.Foo3))!, commandline.Split(' '), out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo3), "1 -a123", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "-a123", tmp);
@@ -53,14 +44,27 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestInputDefaultParm()
         {
-            var commandline = "1 -a123 3 4";
-            
-            CommandLineDeserializer deserializer = new();
-            var ret = deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(nameof(TestingMethods.Foo3))!, commandline.Split(' '), out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo3), "1 -a123 3 4", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "-a123 4", tmp);
             Assert.True(ret != null && (ret as string) == "1,3", (ret as string));
+        }
+        
+        [Test]
+        public void TestParmArray()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo4), "1 2 3", out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
+        }
+
+        private object? _Invoke(string funName, string commandline, out LinkedList<string> remainArgs)
+        {
+            CommandLineDeserializer deserializer = new();
+            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, commandline.Split(' '), out remainArgs);
         }
     }
 }

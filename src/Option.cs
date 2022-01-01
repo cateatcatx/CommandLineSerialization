@@ -18,13 +18,13 @@ namespace Decoherence.CommandLineSerialization
         {
             if (name.Length > 1)
             {
-                if (!ImplHelper.IsValidOptionLongName(name))
-                    throw ImplHelper.NewInvalidOptionLongNameException(name, nameof(name));
+                if (!ImplUtils.IsValidOptionLongName(name))
+                    throw ImplUtils.NewInvalidOptionLongNameException(name, nameof(name));
             }
             else
             {
-                if (!ImplHelper.IsValidOptionShortName(name))
-                    throw ImplHelper.NewInvalidOptionShortNameException(name, nameof(name));
+                if (!ImplUtils.IsValidOptionShortName(name))
+                    throw ImplUtils.NewInvalidOptionShortNameException(name, nameof(name));
             }
             
             Name = name;
