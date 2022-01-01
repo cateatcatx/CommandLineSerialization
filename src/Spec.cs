@@ -40,14 +40,6 @@ namespace Decoherence.CommandLineSerialization
             return mValueSerializer.DeserializeMultiValue(objType, values);
         }
 
-        public object? DeserializeWhenNoMatch(Type objType)
-        {
-            if (mValueSerializer == null)
-                throw _NewInvalidOperationException();
-
-            return mValueSerializer.DeserializeWhenNoMatch(objType);
-        }
-
         private InvalidOperationException _NewInvalidOperationException()
         {
             return new InvalidOperationException("No specified ValueSerializer.");

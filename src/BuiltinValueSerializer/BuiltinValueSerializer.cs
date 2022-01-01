@@ -45,16 +45,6 @@ namespace Decoherence.CommandLineSerialization
             return serializer.DeserializeMultiValue(objType, values);
         }
 
-        public object? DeserializeWhenNoMatch(Type objType)
-        {
-            if (!mSerializers.TryGetValue(objType, out var serializer))
-            {
-                throw _NewCantException(objType);
-            }
-
-            return serializer.DeserializeWhenNoMatch(objType);
-        }
-
         private InvalidOperationException _NewCantException(Type objType)
         {
             return new($"{nameof(BuiltinValueSerializer)} can not serialize or deserialize {objType}.");

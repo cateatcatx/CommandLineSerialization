@@ -8,6 +8,5 @@ namespace Decoherence.CommandLineSerialization
         object? DeserializeNoneValue(Type objType);
         object? DeserializeSingleValue(Type objType, string? value);
         object? DeserializeMultiValue(Type objType, List<string> values);
-        object? DeserializeWhenNoMatch(Type objType);
     }
 }

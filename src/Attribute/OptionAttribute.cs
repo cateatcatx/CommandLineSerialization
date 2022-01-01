@@ -4,31 +4,31 @@ namespace Decoherence.CommandLineSerialization.Attributes
 {
     public class OptionAttribute : SpecAttribute
     {
-        public string? LongName { get; }
-        public char? ShortName { get; }
+        public string? Name { get; }
         public OptionValueType ValueType { get; }
-
-        public OptionAttribute(string longName, OptionValueType valueType, Type? valueSerializerType = null)
+        
+        public OptionAttribute(string? name = null, OptionValueType valueType = OptionValueType.Single, Type? valueSerializerType = null)
             : base(valueSerializerType)
         {
-            if (!ImplHelper.IsValidOptionLongName(longName))
-                throw ImplHelper.NewInvalidOptionLongNameException(longName, nameof(longName));
-            
-            LongName = longName;
+            if (name != null)
+            {
+                if (name.Length > 1)
+                {
+                    if (!ImplHelper.IsValidOptionLongName(name))
+                        throw ImplHelper.NewInvalidOptionLongNameException(name, nameof(name));
+                }
+                else
+                {
+                    if (!ImplHelper.IsValidOptionShortName(name))
+                        throw ImplHelper.NewInvalidOptionShortNameException(name, nameof(name));
+                }
+            }
+
+            Name = name;
             ValueType = valueType;
         }
 
-        public OptionAttribute(char shortName, OptionValueType valueType, Type? valueSerializerType = null)
-            : base(valueSerializerType)
-        {
-            if (!ImplHelper.IsValidOptionShortName(shortName))
-                throw ImplHelper.NewInvalidOptionShortNameException(shortName, nameof(shortName));
-            
-            ShortName = shortName;
-            ValueType = valueType;
-        }
-
-        public override Spec GenerateSpec(Type objType)
+        public override Spec GenerateSpec(string fieldName, Type objType)
         {
             IValueSerializer? serializer = null;
             if (ValueSerializerType != null)
@@ -36,7 +36,7 @@ namespace Decoherence.CommandLineSerialization.Attributes
                 serializer = (IValueSerializer)Activator.CreateInstance(ValueSerializerType);
             }
 
-            return LongName != null ? new Option(LongName, ValueType, objType, serializer) : new Option(ShortName!.Value, ValueType, objType, serializer);
+            return new Option(Name ?? fieldName, ValueType, objType, serializer);
         }
     }
 }

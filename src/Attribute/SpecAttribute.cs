@@ -14,6 +14,6 @@ namespace Decoherence.CommandLineSerialization.Attributes
             ValueSerializerType = valueSerializerType;
         }
 
-        public abstract Spec GenerateSpec(Type objType);
+        public abstract Spec GenerateSpec(string fieldName, Type objType);
     }
 }

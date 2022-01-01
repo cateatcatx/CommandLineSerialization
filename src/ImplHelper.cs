@@ -17,10 +17,10 @@ namespace Decoherence.CommandLineSerialization
 
             return true;
         }
-
-        public static bool IsValidOptionShortName(char shortName)
+        
+        public static bool IsValidOptionShortName(string shortName)
         {
-            return shortName.IsAlpha() || shortName.IsDigit();
+            return shortName.Length == 1 && (shortName.IsAlpha() || shortName.IsDigit());
         }
 
         public static bool IsValidValueSerializerType(Type valueSerializerType)
@@ -33,7 +33,7 @@ namespace Decoherence.CommandLineSerialization
             return new($"'{longName}' is not a valid long option name.", paramName);
         }
         
-        public static ArgumentException NewInvalidOptionShortNameException(char shortName, string paramName)
+        public static ArgumentException NewInvalidOptionShortNameException(string shortName, string paramName)
         {
             return new($"'{shortName}' is not a valid short option name.", paramName);
         }

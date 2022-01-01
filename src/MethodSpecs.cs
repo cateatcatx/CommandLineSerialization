@@ -48,7 +48,7 @@ namespace Decoherence.CommandLineSerialization
             foreach (var paramInfo in parameters)
             {
                 var attr = paramInfo.GetCustomAttribute<SpecAttribute>();
-                ISpec spec = attr != null ? attr.GenerateSpec(paramInfo.ParameterType) : new Argument(_GetDefaultArgumentValueType(paramInfo), paramInfo.ParameterType);
+                ISpec spec = attr != null ? attr.GenerateSpec(paramInfo.Name, paramInfo.ParameterType) : new Argument(_GetDefaultArgumentValueType(paramInfo), paramInfo.ParameterType);
                 mSpecs.Add(spec);
             }
         }
@@ -63,16 +63,27 @@ namespace Decoherence.CommandLineSerialization
 
         public object? Invoke(object? obj, IReadOnlyDictionary<ISpec, object?> specParameters)
         {
-            var parameters = new object?[Method.GetParameters().Length];
+            var paramInfos = Method.GetParameters();
+            var parameters = new object?[paramInfos.Length];
             for (var i = 0; i < parameters.Length; ++i)
             {
                 var spec = mSpecs[i];
-                if (!specParameters.TryGetValue(spec, out var parameter))
+                var setAny = false;
+                if (paramInfos[i].DefaultValue != DBNull.Value)
                 {
-                    throw new ArgumentException($"Lack of {i}th parameter object.");
+                    parameters[i] = paramInfos[i].DefaultValue;
+                    setAny = true;
                 }
-
-                parameters[i] = parameter;
+                if (specParameters.TryGetValue(spec, out var parameter))
+                {
+                    parameters[i] = parameter;
+                    setAny = true;
+                }
+                
+                if (!setAny)
+                {
+                    throw new ArgumentException($"Lack of {i}th non-default parameter object.");
+                }
             }
 
             return Method.Invoke(obj, parameters);

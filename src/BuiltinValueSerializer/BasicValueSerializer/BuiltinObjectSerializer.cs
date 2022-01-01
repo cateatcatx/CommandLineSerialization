@@ -19,10 +19,5 @@ namespace Decoherence.CommandLineSerialization
         {
             throw new InvalidOperationException();
         }
-
-        public object? DeserializeWhenNoMatch(Type objType)
-        {
-            return null;
-        }
     }
 }

@@ -12,7 +12,7 @@ namespace Decoherence.CommandLineSerialization.Attributes
             ValueType = valueType;
         }
 
-        public override Spec GenerateSpec(Type objType)
+        public override Spec GenerateSpec(string fieldName, Type objType)
         {
             return new Argument(ValueType, objType, ValueSerializerType != null ? (IValueSerializer)Activator.CreateInstance(ValueSerializerType) : null);
         }

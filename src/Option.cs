@@ -10,30 +10,24 @@ namespace Decoherence.CommandLineSerialization
         public OptionValueType ValueType { get; }
 
         public Option(
-            string longName, 
+            string name,
             OptionValueType valueType, 
             Type objType,
             IValueSerializer? valueSerializer = null)
             : base(objType, valueSerializer)
         {
-            if (!ImplHelper.IsValidOptionLongName(longName))
-                throw ImplHelper.NewInvalidOptionLongNameException(longName, nameof(longName));
+            if (name.Length > 1)
+            {
+                if (!ImplHelper.IsValidOptionLongName(name))
+                    throw ImplHelper.NewInvalidOptionLongNameException(name, nameof(name));
+            }
+            else
+            {
+                if (!ImplHelper.IsValidOptionShortName(name))
+                    throw ImplHelper.NewInvalidOptionShortNameException(name, nameof(name));
+            }
             
-            Name = longName;
-            ValueType = valueType;
-        }
-        
-        public Option(
-            char shortName, 
-            OptionValueType valueType, 
-            Type objType,
-            IValueSerializer? valueSerializer = null)
-            : base(objType, valueSerializer)
-        {
-            if (!ImplHelper.IsValidOptionShortName(shortName))
-                throw ImplHelper.NewInvalidOptionShortNameException(shortName, nameof(shortName));
-            
-            Name = shortName.ToString();
+            Name = name;
             ValueType = valueType;
         }
     }
