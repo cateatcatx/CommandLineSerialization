@@ -13,13 +13,13 @@ namespace Decoherence.CommandLineSerialization.Attributes
                 {
                     if (value.Length > 1)
                     {
-                        if (!ImplUtils.IsValidOptionLongName(value))
-                            throw new ArgumentException(ImplUtils.InvalidOptionLongNameError(value));
+                        if (!DebugUtil.IsValidOptionLongName(value))
+                            throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(value));
                     }
                     else
                     {
-                        if (!ImplUtils.IsValidOptionShortName(value))
-                            throw new ArgumentException(ImplUtils.InvalidOptionShortNameError(value));
+                        if (!DebugUtil.IsValidOptionShortName(value))
+                            throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(value));
                     }
                 }
 
@@ -32,8 +32,8 @@ namespace Decoherence.CommandLineSerialization.Attributes
             get => mValueType;
             set
             {
-                if (value != ValueType.Default && !ImplUtils.IsValidOptionValueType(value))
-                    throw new ArgumentException(ImplUtils.InvalidOptionValueTypeError(value));
+                if (value != ValueType.Default && !DebugUtil.IsValidOptionValueType(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionValueTypeError(value));
 
                 mValueType = value;
             }

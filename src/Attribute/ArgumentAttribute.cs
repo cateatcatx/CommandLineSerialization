@@ -9,8 +9,8 @@ namespace Decoherence.CommandLineSerialization.Attributes
             get => mValueType;
             set
             {
-                if (value != ValueType.Default && !ImplUtils.IsValidArgumentValueType(value))
-                    throw new ArgumentException(ImplUtils.InvalidArgumentValueTypeError(value));
+                if (value != ValueType.Default && !DebugUtil.IsValidArgumentValueType(value))
+                    throw new ArgumentException(DebugUtil.InvalidArgumentValueTypeError(value));
 
                 mValueType = value;
             }

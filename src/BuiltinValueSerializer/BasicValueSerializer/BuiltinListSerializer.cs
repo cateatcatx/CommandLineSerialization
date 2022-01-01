@@ -36,7 +36,7 @@ namespace Decoherence.CommandLineSerialization
                 innerType = objType.GetElementType();
             }
 
-            IList list = ReflectUtils.CreateList(objType, values.Count);
+            IList list = ReflectUtil.CreateList(objType, values.Count);
             for (var i = 0; i < values.Count; ++i)
             {
                 object? v = values[i];

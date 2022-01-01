@@ -4,7 +4,7 @@ using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public static class ImplUtils
+    public static class DebugUtil
     {
         public static bool IsValidOptionValueType(ValueType valueType)
         {

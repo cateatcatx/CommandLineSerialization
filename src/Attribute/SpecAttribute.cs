@@ -12,8 +12,8 @@ namespace Decoherence.CommandLineSerialization.Attributes
             get => mValueSerializerType;
             set
             {
-                if (value != null && !ImplUtils.IsValidValueSerializerType(value))
-                    throw new ArgumentException(ImplUtils.InvalidValueSerializerTypeError(value));
+                if (value != null && !DebugUtil.IsValidValueSerializerType(value))
+                    throw new ArgumentException(DebugUtil.InvalidValueSerializerTypeError(value));
                 mValueSerializerType = value;
             }
         }

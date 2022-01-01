@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Decoherence
 {
-    public static class ReflectUtils
+    public static class ReflectUtil
     {
         public static Array CreateArray(Type type, int length)
         {

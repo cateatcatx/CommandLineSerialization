@@ -17,17 +17,17 @@ namespace Decoherence.CommandLineSerialization
         {
             if (name.Length > 1)
             {
-                if (!ImplUtils.IsValidOptionLongName(name))
-                    throw new ArgumentException(ImplUtils.InvalidOptionLongNameError(name), nameof(name));
+                if (!DebugUtil.IsValidOptionLongName(name))
+                    throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(name), nameof(name));
             }
             else
             {
-                if (!ImplUtils.IsValidOptionShortName(name))
-                    throw new ArgumentException(ImplUtils.InvalidOptionShortNameError(name), nameof(name));
+                if (!DebugUtil.IsValidOptionShortName(name))
+                    throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(name), nameof(name));
             }
 
-            if (!ImplUtils.IsValidOptionValueType(valueType))
-                throw new ArgumentException(ImplUtils.InvalidOptionValueTypeError(valueType), nameof(valueType));
+            if (!DebugUtil.IsValidOptionValueType(valueType))
+                throw new ArgumentException(DebugUtil.InvalidOptionValueTypeError(valueType), nameof(valueType));
             
             Name = name;
         }
