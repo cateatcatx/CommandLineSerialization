@@ -8,10 +8,22 @@ namespace Decoherence.CommandLineSerialization
 {
     public class MethodSpecs : ISpecs
     {
-        public IReadOnlyDictionary<string, IOption> Options => new Dictionary<string, IOption>(
-                from spec in mSpecs
-                where spec is IOption
-                select new KeyValuePair<string, IOption>(((IOption)spec).Name, (IOption)spec));
+        public IReadOnlyDictionary<string, IOption> Options
+        {
+            get
+            {
+                var dic = new Dictionary<string, IOption>();
+                foreach (var spec in mSpecs)
+                {
+                    if (spec is IOption option)
+                    {
+                        dic.Add(option.Name, option);
+                    }
+                }
+
+                return dic;
+            }
+        }
 
         public IReadOnlyList<IArgument> Arguments => new List<IArgument>(
             from spec in mSpecs
@@ -49,7 +61,7 @@ namespace Decoherence.CommandLineSerialization
             return mSpecs.FindIndex(innerSpec => innerSpec == spec) >= 0;
         }
 
-        public void Invoke(object obj, IReadOnlyDictionary<ISpec, object?> specParameters)
+        public object? Invoke(object? obj, IReadOnlyDictionary<ISpec, object?> specParameters)
         {
             var parameters = new object?[Method.GetParameters().Length];
             for (var i = 0; i < parameters.Length; ++i)
@@ -63,7 +75,7 @@ namespace Decoherence.CommandLineSerialization
                 parameters[i] = parameter;
             }
 
-            Method.Invoke(obj, parameters);
+            return Method.Invoke(obj, parameters);
         }
 
         private ArgumentValueType _GetDefaultArgumentValueType(ParameterInfo paramInfo)

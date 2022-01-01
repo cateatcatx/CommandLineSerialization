@@ -12,7 +12,7 @@ namespace Decoherence.CommandLineSerialization
         private readonly Dictionary<string, IOption> mOptions = new();
         private readonly List<IArgument> mArguments = new();
 
-        public void AddOption(Option option)
+        public void AddOption(IOption option)
         {
             if (!mOptions.TryAdd(option.Name, option))
             {
@@ -20,7 +20,7 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        public void AddArgument(Argument argument)
+        public void AddArgument(IArgument argument)
         {
             mArguments.Add(argument);
         }

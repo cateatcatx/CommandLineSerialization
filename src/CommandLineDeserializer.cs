@@ -131,7 +131,11 @@ namespace Decoherence.CommandLineSerialization
                         node.Value = mShortOptionHolder.ToString();
                         node = node.Next;
                     }
+                    
+                    continue;
                 }
+                
+                node = node.Next;
             }
             
             // 处理多值option
