@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandLineSerialization", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{BCB6A7DC-D7D3-42CB-8468-8A98F69B2F36}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{05E0297C-4310-430C-BD2E-712CBA8FBE2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{BCB6A7DC-D7D3-42CB-8468-8A98F69B2F36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCB6A7DC-D7D3-42CB-8468-8A98F69B2F36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCB6A7DC-D7D3-42CB-8468-8A98F69B2F36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05E0297C-4310-430C-BD2E-712CBA8FBE2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05E0297C-4310-430C-BD2E-712CBA8FBE2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05E0297C-4310-430C-BD2E-712CBA8FBE2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05E0297C-4310-430C-BD2E-712CBA8FBE2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

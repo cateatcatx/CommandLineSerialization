@@ -16,12 +16,8 @@ namespace Decoherence.CommandLineSerialization
             IValueSerializer? valueSerializer = null)
             : base(objType, valueSerializer)
         {
-            foreach (var ch in longName)
-            {
-                // 合法：字母、数字和-
-                if (!ch.IsAlpha() && !ch.IsDigit() && ch != '-')
-                    throw new ArgumentException($"'{longName}' is not a valid long option name.", nameof(longName));
-            }
+            if (!ImplHelper.IsValidOptionLongName(longName))
+                throw ImplHelper.NewInvalidOptionLongNameException(longName, nameof(longName));
             
             Name = longName;
             ValueType = valueType;
@@ -34,8 +30,8 @@ namespace Decoherence.CommandLineSerialization
             IValueSerializer? valueSerializer = null)
             : base(objType, valueSerializer)
         {
-            if (!shortName.IsAlpha() && !shortName.IsDigit())
-                throw new ArgumentException($"'{shortName}' is not a valid short option name.", nameof(shortName));
+            if (!ImplHelper.IsValidOptionShortName(shortName))
+                throw ImplHelper.NewInvalidOptionShortNameException(shortName, nameof(shortName));
             
             Name = shortName.ToString();
             ValueType = valueType;
