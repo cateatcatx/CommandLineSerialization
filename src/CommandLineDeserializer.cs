@@ -24,8 +24,8 @@ namespace Decoherence.CommandLineSerialization
         /// <summary>
         /// 反序列化
         /// </summary>
-        /// <param name="args">分割后的命令行参数</param>
-        /// <param name="specs">参数说明</param>
+        /// <param name="args">命令行参数</param>
+        /// <param name="specs">命令行参数说明</param>
         /// <param name="onDeserialized">当反序列化成功时调用</param>
         /// <param name="onMatchNothing">未匹配任何参数时调用</param>
         /// <returns>反序列化后剩余的命令行参数</returns>
@@ -35,42 +35,89 @@ namespace Decoherence.CommandLineSerialization
             OnDeserialized? onDeserialized,
             OnMatchNothing? onMatchNothing)
         {
-            if (args == null)
-                throw new ArgumentNullException(nameof(args));
-            if (specs == null)
-                throw new ArgumentNullException(nameof(specs));
-
-            LinkedList<string> argList = new(args);
-            
+            var argList = new LinkedList<string>(args);
+            Deserialize(argList, specs, onDeserialized, onMatchNothing);
+            return argList;
+        }
+        
+        /// <summary>
+        /// <inheritdoc cref="Deserialize(System.Collections.Generic.IEnumerable{string},Decoherence.CommandLineSerialization.ISpecs,Decoherence.CommandLineSerialization.CommandLineDeserializer.OnDeserialized?,Decoherence.CommandLineSerialization.CommandLineDeserializer.OnMatchNothing?)"/>
+        /// </summary>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <param name="specs">命令行参数说明</param>
+        /// <param name="onDeserialized">当反序列化成功时调用</param>
+        /// <param name="onMatchNothing">未匹配任何参数时调用</param>
+        public void Deserialize(
+            LinkedList<string> argList, 
+            ISpecs specs,
+            OnDeserialized? onDeserialized,
+            OnMatchNothing? onMatchNothing)
+        {
             var nodeAfterDemarcate = _ParseOptions(argList.First, specs, onDeserialized, onMatchNothing);
             _ParseArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
-            
-            return argList;
         }
 
         /// <summary>
-        /// 用命令行参数调用函数
+        /// 调用函数
         /// </summary>
-        /// <param name="method">函数</param>
+        /// <param name="method">待调用函数</param>
+        /// <param name="obj">调用函数时的this对象</param>
         /// <param name="args">命令行参数</param>
-        /// <param name="remainArgs">调用后剩余的参数</param>
+        /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
         /// <returns>函数返回值</returns>
-        public object? InvokeMethod(MethodBase method, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="args"/>中的参数不足</exception>
+        public object? InvokeMethod(MethodBase method, object? obj, IEnumerable<string> args, out LinkedList<string> remainArgs)
         {
-            MethodSpecs methodSpecs = new(method);
-            methodSpecs.AnalyseMethod();
+            remainArgs = new LinkedList<string>(args);
+            return InvokeMethod(new MethodSpecs(method), obj, remainArgs);
+        }
 
-            Dictionary<ISpec, object?> specParameters = new();
-            remainArgs = Deserialize(args, methodSpecs,
-                (spec, obj) =>
+        /// <summary>
+        /// <inheritdoc cref="InvokeMethod(System.Reflection.MethodBase,object?,System.Collections.Generic.IEnumerable{string},out System.Collections.Generic.LinkedList{string})"/>
+        /// </summary>
+        /// <param name="methodSpecs">函数的命令行参数说明</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <returns>函数返回值</returns>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="argList"/>中的参数不足</exception>
+        public object? InvokeMethod(MethodSpecs methodSpecs, object? obj, LinkedList<string> argList)
+        {
+            var method = methodSpecs.Method;
+            var paramInfos = method.GetParameters();
+            var length = paramInfos.Length;
+            var parameters = new object?[length];
+            var touchedIndexes = new bool[length];
+            
+            Deserialize(argList, methodSpecs,
+                (spec, paramObj) =>
                 {
-                    if (methodSpecs.IsParameterSpec(spec))
+                    var index = methodSpecs.GetParameterIndex(spec);
+                    if (0 <= index && index < length)
                     {
-                        specParameters.Add(spec, obj);
+                        parameters[index] = paramObj;
+                        touchedIndexes[index] = true;
                     }
                 }, null);
-            
-            return methodSpecs.Invoke(null, specParameters);
+
+            // 设置函数参数自身的默认值
+            for (var i = 0; i < length; ++i)
+            {
+                if (touchedIndexes[i])
+                {
+                    continue;
+                }
+                
+                if (paramInfos[i].DefaultValue == DBNull.Value)
+                {
+                    throw new ArgumentException($"Lack of {i}th non-default parameter object.", nameof(argList));
+                }
+                
+                parameters[i] = paramInfos[i].DefaultValue;
+            }
+
+            return method.Invoke(obj, parameters);
         }
 
         private LinkedListNode<string>? _ParseOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)

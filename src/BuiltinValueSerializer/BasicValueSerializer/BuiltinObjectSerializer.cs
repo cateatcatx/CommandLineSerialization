@@ -17,7 +17,7 @@ namespace Decoherence.CommandLineSerialization
 
         public object? DeserializeSingleValue(Type objType, string? value)
         {
-            throw new InvalidOperationException();
+            
         }
 
         public object? DeserializeMultiValue(Type objType, List<string> values)

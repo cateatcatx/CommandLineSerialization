@@ -12,6 +12,8 @@ namespace Decoherence.CommandLineSerialization
         {
             get
             {
+                _TryAnalyseMethod();
+                
                 var dic = new Dictionary<string, IOption>();
                 foreach (var spec in mSpecs)
                 {
@@ -25,14 +27,23 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        public IReadOnlyList<IArgument> Arguments => new List<IArgument>(
-            from spec in mSpecs
-            where spec is IArgument
-            select (IArgument)spec);
-        
+        public IReadOnlyList<IArgument> Arguments
+        {
+            get
+            {
+                _TryAnalyseMethod();
+                
+                return new List<IArgument>(
+                    from spec in mSpecs
+                    where spec is IArgument
+                    select (IArgument)spec);
+            }
+        }
+
         public MethodBase Method { get; }
 
         private readonly List<ISpec> mSpecs = new();
+        private bool mAnalysed;
 
         public MethodSpecs(MethodBase method)
         {
@@ -40,10 +51,26 @@ namespace Decoherence.CommandLineSerialization
         }
 
         /// <summary>
+        /// 获取spec对应的函数参数的index
+        /// </summary>
+        public int GetParameterIndex(ISpec spec)
+        {
+            _TryAnalyseMethod();
+            
+            return mSpecs.FindIndex(innerSpec => innerSpec == spec);
+        }
+        
+        /// <summary>
         /// 分析方法，生成参数对应的option和argument
         /// </summary>
-        public void AnalyseMethod()
+        private void _TryAnalyseMethod()
         {
+            if (mAnalysed)
+            {
+                return;
+            }
+            mAnalysed = true;
+            
             var parameters = Method.GetParameters();
             foreach (var paramInfo in parameters)
             {
@@ -51,42 +78,6 @@ namespace Decoherence.CommandLineSerialization
                 ISpec spec = _GenerateSpec(attr, paramInfo);
                 mSpecs.Add(spec);
             }
-        }
-
-        /// <summary>
-        /// 判断指定spec是否属于本函数的参数
-        /// </summary>
-        public bool IsParameterSpec(ISpec spec)
-        {
-            return mSpecs.FindIndex(innerSpec => innerSpec == spec) >= 0;
-        }
-
-        public object? Invoke(object? obj, IReadOnlyDictionary<ISpec, object?> specParameters)
-        {
-            var paramInfos = Method.GetParameters();
-            var parameters = new object?[paramInfos.Length];
-            for (var i = 0; i < parameters.Length; ++i)
-            {
-                var spec = mSpecs[i];
-                var setAny = false;
-                if (paramInfos[i].DefaultValue != DBNull.Value)
-                {
-                    parameters[i] = paramInfos[i].DefaultValue;
-                    setAny = true;
-                }
-                if (specParameters.TryGetValue(spec, out var parameter))
-                {
-                    parameters[i] = parameter;
-                    setAny = true;
-                }
-                
-                if (!setAny)
-                {
-                    throw new ArgumentException($"Lack of {i}th non-default parameter object.");
-                }
-            }
-
-            return Method.Invoke(obj, parameters);
         }
 
         private ISpec _GenerateSpec(SpecAttribute? attr, ParameterInfo paramInfo)
