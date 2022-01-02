@@ -12,18 +12,8 @@ namespace Decoherence.CommandLineSerialization
         {
             get
             {
-                _TryAnalyseMethod();
-                
-                var dic = new Dictionary<string, IOption>();
-                foreach (var spec in mSpecs)
-                {
-                    if (spec is IOption option)
-                    {
-                        dic.Add(option.Name, option);
-                    }
-                }
-
-                return dic;
+                Init();
+                return mSpecs.Options;
             }
         }
 
@@ -31,19 +21,17 @@ namespace Decoherence.CommandLineSerialization
         {
             get
             {
-                _TryAnalyseMethod();
-                
-                return new List<IArgument>(
-                    from spec in mSpecs
-                    where spec is IArgument
-                    select (IArgument)spec);
+                Init();
+                return mSpecs.Arguments;
             }
         }
 
         public MethodBase Method { get; }
 
-        private readonly List<ISpec> mSpecs = new();
-        private bool mAnalysed;
+        private readonly List<ISpec> mParameterOrderSpecs = new();
+        private readonly Specs mSpecs = new();
+        
+        private bool mInited;
 
         public MethodSpecs(MethodBase method)
         {
@@ -53,58 +41,42 @@ namespace Decoherence.CommandLineSerialization
         /// <summary>
         /// 获取spec对应的函数参数的index
         /// </summary>
-        public int GetParameterIndex(ISpec spec)
+        public bool TryGetParameterIndex(ISpec spec, out int index)
         {
-            _TryAnalyseMethod();
+            Init();
             
-            return mSpecs.FindIndex(innerSpec => innerSpec == spec);
+            index = mParameterOrderSpecs.FindIndex(innerSpec => innerSpec == spec);
+            return index >= 0;
         }
         
         /// <summary>
         /// 分析方法，生成参数对应的option和argument
         /// </summary>
-        private void _TryAnalyseMethod()
+        public void Init()
         {
-            if (mAnalysed)
+            if (mInited)
             {
                 return;
             }
-            mAnalysed = true;
+            mInited = true;
             
             var parameters = Method.GetParameters();
             foreach (var paramInfo in parameters)
             {
                 var attr = paramInfo.GetCustomAttribute<SpecAttribute>();
-                ISpec spec = _GenerateSpec(attr, paramInfo);
-                mSpecs.Add(spec);
-            }
-        }
+                var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ValueType.Single;
+                var spec = attr != null 
+                    ? ImplUtil.GenerateSpecByAttribute(
+                        attr,
+                        paramInfo.ParameterType,
+                        paramInfo.Name,
+                        defaultValueType,
+                        null)
+                    : new Argument(0, defaultValueType, paramInfo.ParameterType, null);
 
-        private ISpec _GenerateSpec(SpecAttribute? attr, ParameterInfo paramInfo)
-        {
-            // params的参数是Sequence
-            var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ValueType.Single;
-            
-            if (attr is null or ArgumentAttribute)
-            {
-                ArgumentAttribute? argumentAttr = null;
-                if (attr != null)
-                {
-                    argumentAttr = (ArgumentAttribute)attr;
-                }
-                
-                return new Argument(
-                    argumentAttr != null && argumentAttr.ValueType != ValueType.Default ? argumentAttr.ValueType : defaultValueType, 
-                    paramInfo.ParameterType, 
-                    argumentAttr?.Serializer);
+                mParameterOrderSpecs.Add(spec);
+                mSpecs.AddSpec(spec);
             }
-
-            var optionAttr = (OptionAttribute)attr;
-            return new Option(
-                optionAttr.Name ?? paramInfo.Name, 
-                optionAttr.ValueType != ValueType.Default ? optionAttr.ValueType : defaultValueType, 
-                paramInfo.ParameterType, 
-                optionAttr.Serializer);
         }
     }
 }

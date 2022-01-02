@@ -4,6 +4,8 @@ namespace Decoherence.CommandLineSerialization.Attributes
 {
     public class ArgumentAttribute : SpecAttribute
     {
+        public int Priority { get; set; }
+        
         public override ValueType ValueType
         {
             get => mValueType;

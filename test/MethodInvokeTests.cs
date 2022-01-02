@@ -103,10 +103,11 @@ namespace Decoherence.CommandLineSerialization.Test
         
        
 
-        private object? _Invoke(string funName, string commandline, out LinkedList<string> remainArgs)
+        private object? _Invoke(string funName, string commandLine, out LinkedList<string> remainArgs)
         {
             CommandLineDeserializer deserializer = new();
-            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, commandline.Split(' '), out remainArgs);
+            
+            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, null, commandLine.Split(' '), out remainArgs);
         }
     }
 }

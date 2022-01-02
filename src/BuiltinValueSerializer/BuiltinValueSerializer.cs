@@ -31,34 +31,44 @@ namespace Decoherence.CommandLineSerialization
             throw new NotImplementedException();
         }
 
-        public object? DeserializeNonValue(Type objType)
+        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
         {
             if (!_TryGetSerializer(objType, out var serializer))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeNonValue(objType);
+            return serializer.DeserializeNonValue(deserializer, objType);
         }
 
-        public object? DeserializeSingleValue(Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
         {
             if (!_TryGetSerializer(objType, out var serializer))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeSingleValue(objType, value);
+            return serializer.DeserializeSingleValue(deserializer, objType, value);
         }
 
-        public object? DeserializeMultiValue(Type objType, List<string> values)
+        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
         {
             if (!_TryGetSerializer(objType, out var serializer))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeMultiValue(objType, values);
+            return serializer.DeserializeSplitedSingleValue(deserializer, objType, argList);
+        }
+
+        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
+        {
+            if (!_TryGetSerializer(objType, out var serializer))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serializer.DeserializeMultiValue(deserializer, objType, values);
         }
 
         private bool _TryGetSerializer(Type objType, out IValueSerializer serializer)

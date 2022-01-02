@@ -22,28 +22,36 @@ namespace Decoherence.CommandLineSerialization
             return mValueSerializer != null && objType == ObjType;
         }
 
-        public object? DeserializeNonValue(Type objType)
+        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
         {
             if (mValueSerializer == null)
                 throw _NewInvalidOperationException();
             
-            return mValueSerializer.DeserializeNonValue(objType);
+            return mValueSerializer.DeserializeNonValue(deserializer, objType);
         }
 
-        public object? DeserializeSingleValue(Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
         {
             if (mValueSerializer == null)
                 throw _NewInvalidOperationException();
 
-            return mValueSerializer.DeserializeSingleValue(objType, value);
+            return mValueSerializer.DeserializeSingleValue(deserializer, objType, value);
         }
 
-        public object? DeserializeMultiValue(Type objType, List<string> values)
+        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
         {
             if (mValueSerializer == null)
                 throw _NewInvalidOperationException();
 
-            return mValueSerializer.DeserializeMultiValue(objType, values);
+            return mValueSerializer.DeserializeSplitedSingleValue(deserializer, objType, argList);
+        }
+
+        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
+        {
+            if (mValueSerializer == null)
+                throw _NewInvalidOperationException();
+
+            return mValueSerializer.DeserializeMultiValue(deserializer, objType, values);
         }
 
         private InvalidOperationException _NewInvalidOperationException()

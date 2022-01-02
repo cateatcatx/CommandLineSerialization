@@ -7,8 +7,9 @@ namespace Decoherence.CommandLineSerialization
     {
         bool CanHandleType(Type objType);
         
-        object? DeserializeNonValue(Type objType);
-        object? DeserializeSingleValue(Type objType, string? value);
-        object? DeserializeMultiValue(Type objType, List<string> values);
+        object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType);
+        object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value);
+        object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList);
+        object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values);
     }
 }

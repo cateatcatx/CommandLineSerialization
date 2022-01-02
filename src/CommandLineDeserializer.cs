@@ -15,10 +15,73 @@ namespace Decoherence.CommandLineSerialization
         public delegate void OnMatchNothing(ISpec spec);
         
         private readonly IValueSerializer mValueSerializer;
+        private readonly MethodInvoker mMethodInvoker;
 
         public CommandLineDeserializer(IValueSerializer? valueSerializer = null)
         {
             mValueSerializer = valueSerializer ?? new BuiltinValueSerializer();
+            mMethodInvoker = new MethodInvoker();
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="DeserializeObject(System.Type,System.Collections.Generic.LinkedList{string})"/>
+        /// </summary>
+        /// <param name="objType">对象类型</param>
+        /// <param name="args">命令行参数</param>
+        /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
+        /// <returns>结果对象</returns>
+        public object? DeserializeObject(Type objType, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(args);
+            return DeserializeObject(objType, remainArgs);
+        }
+
+        /// <summary>
+        /// 反序列化对象
+        /// </summary>
+        /// <param name="objType">对象类型</param>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <returns>结果对象</returns>
+        public object? DeserializeObject(Type objType, LinkedList<string> argList)
+        {
+            return mValueSerializer.DeserializeSplitedSingleValue(this, objType, argList);
+        }
+        
+        /// <summary>
+        /// 将命令行参数作为参数调用函数
+        /// </summary>
+        /// <param name="method">待调用函数</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="args">命令行参数</param>
+        /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
+        /// <returns>函数返回值</returns>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="args"/>中的参数不足</exception>
+        public object? InvokeMethod(
+            MethodBase method, 
+            object? obj, 
+            IEnumerable<string> args, 
+            out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(args);
+            return mMethodInvoker.InvokeMethod(this, new MethodSpecs(method), obj, remainArgs);
+        }
+        
+        /// <summary>
+        /// <inheritdoc cref="InvokeMethod(System.Reflection.MethodBase,object?,System.Collections.Generic.IEnumerable{string},out System.Collections.Generic.LinkedList{string})"/>
+        /// </summary>
+        /// <param name="method">待调用函数</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <returns>函数返回值</returns>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="argList"/>中的参数不足</exception>
+        public object? InvokeMethod(
+            MethodBase method, 
+            object? obj, 
+            LinkedList<string> argList)
+        {
+            return mMethodInvoker.InvokeMethod(this, new MethodSpecs(method), obj, argList);
         }
 
         /// <summary>
@@ -57,67 +120,9 @@ namespace Decoherence.CommandLineSerialization
             _ParseArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
         }
 
-        /// <summary>
-        /// 调用函数
-        /// </summary>
-        /// <param name="method">待调用函数</param>
-        /// <param name="obj">调用函数时的this对象</param>
-        /// <param name="args">命令行参数</param>
-        /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
-        /// <returns>函数返回值</returns>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="args"/>中的参数不足</exception>
-        public object? InvokeMethod(MethodBase method, object? obj, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        public LinkedList<string> SplitCommandLine(string commandLine)
         {
-            remainArgs = new LinkedList<string>(args);
-            return InvokeMethod(new MethodSpecs(method), obj, remainArgs);
-        }
-
-        /// <summary>
-        /// <inheritdoc cref="InvokeMethod(System.Reflection.MethodBase,object?,System.Collections.Generic.IEnumerable{string},out System.Collections.Generic.LinkedList{string})"/>
-        /// </summary>
-        /// <param name="methodSpecs">函数的命令行参数说明</param>
-        /// <param name="obj">调用函数时的this对象</param>
-        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
-        /// <returns>函数返回值</returns>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="argList"/>中的参数不足</exception>
-        public object? InvokeMethod(MethodSpecs methodSpecs, object? obj, LinkedList<string> argList)
-        {
-            var method = methodSpecs.Method;
-            var paramInfos = method.GetParameters();
-            var length = paramInfos.Length;
-            var parameters = new object?[length];
-            var touchedIndexes = new bool[length];
-            
-            Deserialize(argList, methodSpecs,
-                (spec, paramObj) =>
-                {
-                    var index = methodSpecs.GetParameterIndex(spec);
-                    if (0 <= index && index < length)
-                    {
-                        parameters[index] = paramObj;
-                        touchedIndexes[index] = true;
-                    }
-                }, null);
-
-            // 设置函数参数自身的默认值
-            for (var i = 0; i < length; ++i)
-            {
-                if (touchedIndexes[i])
-                {
-                    continue;
-                }
-                
-                if (paramInfos[i].DefaultValue == DBNull.Value)
-                {
-                    throw new ArgumentException($"Lack of {i}th non-default parameter object.", nameof(argList));
-                }
-                
-                parameters[i] = paramInfos[i].DefaultValue;
-            }
-
-            return method.Invoke(obj, parameters);
+            throw new NotImplementedException();
         }
 
         private LinkedListNode<string>? _ParseOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
@@ -160,9 +165,13 @@ namespace Decoherence.CommandLineSerialization
                     if (_TryGetOption(optionName, options, parsedOptions, out var option))
                     {
                         _DeserializeOption(onDeserialized, option, appendedValue, parsingMultiValueOptions, ref parsingOption);
+                        node = _ConsumeNode(node);
                     }
-
-                    node = _ConsumeNode(node);
+                    else
+                    {
+                        node = node.Next;
+                    }
+                    
                     continue;
                 }
 
@@ -410,17 +419,17 @@ namespace Decoherence.CommandLineSerialization
         
         private object? _DeserializeNonValue(ISpec spec)
         {
-            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNonValue(spec.ObjType) : mValueSerializer.DeserializeNonValue(spec.ObjType);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNonValue(this, spec.ObjType) : mValueSerializer.DeserializeNonValue(this, spec.ObjType);
         }
 
         private object? _DeserializeSingleValue(ISpec spec, string? value)
         {
-            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeSingleValue(spec.ObjType, value) : mValueSerializer.DeserializeSingleValue(spec.ObjType, value);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeSingleValue(this, spec.ObjType, value) : mValueSerializer.DeserializeSingleValue(this, spec.ObjType, value);
         }
 
         private object? _DeserializeMultiValue(ISpec spec, List<string> values)
         {
-            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeMultiValue(spec.ObjType, values) : mValueSerializer.DeserializeMultiValue(spec.ObjType, values);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeMultiValue(this, spec.ObjType, values) : mValueSerializer.DeserializeMultiValue(this, spec.ObjType, values);
         }
     }
 }

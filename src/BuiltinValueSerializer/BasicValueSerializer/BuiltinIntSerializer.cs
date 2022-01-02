@@ -10,17 +10,22 @@ namespace Decoherence.CommandLineSerialization
             return objType == typeof(int);
         }
 
-        public object? DeserializeNonValue(Type objType)
+        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
         {
             throw new InvalidOperationException();
         }
 
-        public object? DeserializeSingleValue(Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? 0 : int.Parse(value);
         }
 
-        public object? DeserializeMultiValue(Type objType, List<string> values)
+        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
         {
             throw new InvalidOperationException();
         }

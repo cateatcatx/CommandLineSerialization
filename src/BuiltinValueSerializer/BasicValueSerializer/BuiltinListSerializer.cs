@@ -11,19 +11,24 @@ namespace Decoherence.CommandLineSerialization
             return typeof(IList).IsAssignableFrom(objType);
         }
 
-        public object? DeserializeNonValue(Type objType)
+        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
         {
             return null;
         }
 
-        public object? DeserializeSingleValue(Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
         {
             return string.IsNullOrWhiteSpace(value) 
                 ? null 
                 : _Deserialize(objType, value.Split(','));
         }
 
-        public object? DeserializeMultiValue(Type objType, List<string> values)
+        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
+        {
+            return _Deserialize(objType, new List<string>(argList));
+        }
+
+        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
         {
             return _Deserialize(objType, values);
         }
