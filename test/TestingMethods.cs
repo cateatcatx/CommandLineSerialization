@@ -28,5 +28,20 @@ namespace Decoherence.CommandLineSerialization.Test
         {
             return $"{a},{string.Join(',', b)}";
         }
+        
+        public static string Foo6(int a, [Option(Name = "bbb")] params int[] b)
+        {
+            return $"{a},{string.Join(',', b)}";
+        }
+        
+        public static string Foo7(int a, [Option(ValueType = ValueType.Multi)] params int[] b)
+        {
+            return $"{a},{string.Join(',', b)}";
+        }
+        
+        public static string Foo8(int a, [Option(Name = "bbb", ValueType = ValueType.Multi)] params int[] b)
+        {
+            return $"{a},{string.Join(',', b)}";
+        }
     }
 }

@@ -62,7 +62,7 @@ namespace Decoherence.CommandLineSerialization.Test
         }
         
         [Test]
-        public void TestParamArrayViaOption()
+        public void TestParamArrayViaShortOption()
         {
             var ret = _Invoke(nameof(TestingMethods.Foo5), "1 -b2 3", out var remainArgs);
 
@@ -70,6 +70,38 @@ namespace Decoherence.CommandLineSerialization.Test
             Assert.True(tmp == "", tmp);
             Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
         }
+        
+        [Test]
+        public void TestParamArrayViaMultiShortOption()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo7), "1 -b2 -b 3", out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
+        }
+        
+        [Test]
+        public void TestParamArrayViaLongOption()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo6), "1 --bbb=2 3", out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
+        }
+        
+        [Test]
+        public void TestParamArrayViaMultiLongOption()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo8), "1 --bbb=2 --bbb 3", out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
+        }
+        
+       
 
         private object? _Invoke(string funName, string commandline, out LinkedList<string> remainArgs)
         {
