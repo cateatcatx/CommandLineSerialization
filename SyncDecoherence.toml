@@ -6,12 +6,13 @@ destiny = "src/Decoherence"
 
 # 要同步的路径
 sync_paths = [
-    "Misc",
+	"Collections/PriorityList.cs",
 	"SystemExtensions/CharExtensions.cs",
 	"SystemExtensions/DictionaryExtensions.cs",
+	"SystemExtensions/MemberInfoExtensions.cs",
 	"SystemExtensions/StringExtensions.cs",
+	"SystemExtensions/TypeExtensions.cs",
 	"Utils/ReflectUtil.cs",
-	"Collections/PriorityList.cs",
 ]
 
 # 同时时忽略的路径
