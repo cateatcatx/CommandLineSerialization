@@ -32,7 +32,22 @@ namespace Decoherence.CommandLineSerialization
         {
             return _Deserialize(objType, values);
         }
-        
+
+        public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
+        }
+
         private static object? _Deserialize(Type objType, IList values)
         {
             Type? innerType = null;

@@ -54,6 +54,30 @@ namespace Decoherence.CommandLineSerialization
             return mValueSerializer.DeserializeMultiValue(deserializer, objType, values);
         }
 
+        public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (mValueSerializer == null)
+                throw _NewInvalidOperationException();
+            
+            return mValueSerializer.SerializeNonValue(serializer, objType, obj);
+        }
+
+        public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (mValueSerializer == null)
+                throw _NewInvalidOperationException();
+            
+            return mValueSerializer.SerializeSingleValue(serializer, objType, obj);
+        }
+
+        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (mValueSerializer == null)
+                throw _NewInvalidOperationException();
+            
+            return mValueSerializer.SerializeMultiValue(serializer, objType, obj);
+        }
+
         private InvalidOperationException _NewInvalidOperationException()
         {
             return new InvalidOperationException("No specified ValueSerializer.");

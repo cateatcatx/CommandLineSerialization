@@ -17,11 +17,9 @@ namespace Decoherence.CommandLineSerialization
         {
             if (attr is ArgumentAttribute argumentAttr)
             {
-                return new Argument(
-                    argumentAttr.Priority,
-                    argumentAttr.ValueType != ValueType.Default ? argumentAttr.ValueType : defaultValueType, 
+                return new Argument(argumentAttr.ValueType != ValueType.Default ? argumentAttr.ValueType : defaultValueType, 
                     objType, 
-                    argumentAttr.Serializer ?? defaultValueSerializer);
+                    argumentAttr.Priority, argumentAttr.Serializer ?? defaultValueSerializer);
             }
 
             var optionAttr = (OptionAttribute)attr;

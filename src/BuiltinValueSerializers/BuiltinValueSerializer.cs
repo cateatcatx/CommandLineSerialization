@@ -71,6 +71,36 @@ namespace Decoherence.CommandLineSerialization
             return serializer.DeserializeMultiValue(deserializer, objType, values);
         }
 
+        public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (!_TryGetSerializer(objType, out var serial))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serial.SerializeNonValue(serializer, objType, obj);
+        }
+
+        public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (!_TryGetSerializer(objType, out var serial))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serial.SerializeSingleValue(serializer, objType, obj);
+        }
+
+        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (!_TryGetSerializer(objType, out var serial))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serial.SerializeMultiValue(serializer, objType, obj);
+        }
+
         private bool _TryGetSerializer(Type objType, out IValueSerializer serializer)
         {
             if (mType2Serializer.TryGetValue(objType, out serializer))

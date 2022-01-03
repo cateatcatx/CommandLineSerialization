@@ -29,5 +29,23 @@ namespace Decoherence.CommandLineSerialization
         {
             throw new InvalidOperationException();
         }
+
+        public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (obj is not int)
+                throw new InvalidOperationException();
+            
+            return obj.ToString();
+        }
+
+        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -116,11 +116,11 @@ namespace Decoherence.CommandLineSerialization
             OnDeserialized? onDeserialized,
             OnMatchNothing? onMatchNothing)
         {
-            var nodeAfterDemarcate = _ParseOptions(argList.First, specs, onDeserialized, onMatchNothing);
-            _ParseArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
+            var nodeAfterDemarcate = _DeserializeOptions(argList.First, specs, onDeserialized, onMatchNothing);
+            _DeserializeArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
         }
         
-        private LinkedListNode<string>? _ParseOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
+        private LinkedListNode<string>? _DeserializeOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
         {
             Dictionary<IOption, List<string>> parsingMultiValueOptions = new();
             StringBuilder shortOptionHolder = new();
@@ -230,7 +230,7 @@ namespace Decoherence.CommandLineSerialization
             return nodeAfterDemarcate;
         }
 
-        private void _ParseArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
+        private void _DeserializeArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
         {
             if (specs.Arguments.Count <= 0)
                 return;

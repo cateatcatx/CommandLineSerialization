@@ -72,7 +72,7 @@ namespace Decoherence.CommandLineSerialization
                         paramInfo.Name,
                         defaultValueType,
                         null)
-                    : new Argument(0, defaultValueType, paramInfo.ParameterType, null);
+                    : new Argument(defaultValueType, paramInfo.ParameterType, 0, null);
 
                 mParameterOrderSpecs.Add(spec);
                 mSpecs.AddSpec(spec);
