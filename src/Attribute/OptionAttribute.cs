@@ -2,6 +2,7 @@
 
 namespace Decoherence.CommandLineSerialization.Attributes
 {
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionAttribute : SpecAttribute
     {
         public string? Name

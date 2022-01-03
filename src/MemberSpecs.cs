@@ -7,7 +7,7 @@ using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public class ObjectMemberSpecs : ISpecs
+    public class MemberSpecs : ISpecs
     {
         public IReadOnlyDictionary<string, IOption> Options 
         {
@@ -33,7 +33,7 @@ namespace Decoherence.CommandLineSerialization
 
         private bool mInited;
 
-        public ObjectMemberSpecs(Type objType)
+        public MemberSpecs(Type objType)
         {
             mObjType = objType;
             mSpec2MemberInfo = new Dictionary<ISpec, MemberInfo>();
@@ -81,7 +81,7 @@ namespace Decoherence.CommandLineSerialization
 
         private void _HandlePublicMember(MemberInfo memberInfo)
         {
-            if (!memberInfo.CanWrite())
+            if (!memberInfo.CanWrite() || memberInfo.GetCustomAttribute<IgnoreAttribute>() != null)
             {
                 return;
             }
@@ -93,7 +93,7 @@ namespace Decoherence.CommandLineSerialization
 
         private void _HandleNonPublicMember(MemberInfo memberInfo)
         {
-            if (!memberInfo.CanWrite())
+            if (!memberInfo.CanWrite() || memberInfo.GetCustomAttribute<IgnoreAttribute>() != null)
             {
                 return;
             }
