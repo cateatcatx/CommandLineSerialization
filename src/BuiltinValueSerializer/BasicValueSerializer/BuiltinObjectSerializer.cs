@@ -27,7 +27,7 @@ namespace Decoherence.CommandLineSerialization
                 return null;
             }
             
-            var argList = deserializer.SplitCommandLine(value);
+            var argList = ImplUtil.SplitCommandLine(value);
             return DeserializeSplitedSingleValue(deserializer, objType, argList);
         }
 

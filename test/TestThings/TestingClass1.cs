@@ -6,6 +6,11 @@ namespace Decoherence.CommandLineSerialization.Test
     {
         public int FieldA;
         public int FieldB;
+
+        public override string ToString()
+        {
+            return $"{FieldA},{FieldB}";
+        }
     }
     
     public class TestingClass2
@@ -28,5 +33,16 @@ namespace Decoherence.CommandLineSerialization.Test
         public int FieldB;
 
         public int FieldC;
+    }
+    
+    public class TestingClass4
+    {
+        public int FieldA;
+        public TestingClass1 FieldB;
+
+        public override string ToString()
+        {
+            return $"{FieldA},{FieldB}";
+        }
     }
 }

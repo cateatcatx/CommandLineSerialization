@@ -43,5 +43,10 @@ namespace Decoherence.CommandLineSerialization.Test
         {
             return $"{a},{string.Join(',', b)}";
         }
+
+        public static string Foo9(int a, [Option] TestingClass4 b)
+        {
+            return $"{a},{b}";
+        }
     }
 }

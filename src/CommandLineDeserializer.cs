@@ -119,12 +119,7 @@ namespace Decoherence.CommandLineSerialization
             var nodeAfterDemarcate = _ParseOptions(argList.First, specs, onDeserialized, onMatchNothing);
             _ParseArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
         }
-
-        public LinkedList<string> SplitCommandLine(string commandLine)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         private LinkedListNode<string>? _ParseOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
         {
             Dictionary<IOption, List<string>> parsingMultiValueOptions = new();

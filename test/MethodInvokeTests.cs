@@ -101,13 +101,28 @@ namespace Decoherence.CommandLineSerialization.Test
             Assert.True(ret != null && (ret as string) == "1,2,3", (ret as string));
         }
         
-       
+        [Test]
+        public void TestOptionObject()
+        {
+            var ret = _Invoke(nameof(TestingMethods.Foo9), new[] { "1", "-b--FieldA 1 --FieldB=--FieldA\\ 2\\ --FieldB\\ 3" }, out var remainArgs);
+
+            var tmp = string.Join(' ', remainArgs);
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "1,1,2,3", (ret as string));
+        }
 
         private object? _Invoke(string funName, string commandLine, out LinkedList<string> remainArgs)
         {
             CommandLineDeserializer deserializer = new();
             
             return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, null, commandLine.Split(' '), out remainArgs);
+        }
+        
+        private object? _Invoke(string funName, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        {
+            CommandLineDeserializer deserializer = new();
+            
+            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, null, args, out remainArgs);
         }
     }
 }
