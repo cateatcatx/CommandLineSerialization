@@ -41,7 +41,7 @@ namespace Decoherence.CommandLineSerialization
         }
         
         /// <summary>
-        /// <inheritdoc cref="Deserialize(System.Collections.Generic.IEnumerable{string},Decoherence.CommandLineSerialization.ISpecs,Decoherence.CommandLineSerialization.CommandLineSerializer.OnDeserialized?,Decoherence.CommandLineSerialization.CommandLineSerializer.OnMatchNothing?)"/>
+        /// <inheritdoc cref="Deserialize(System.Collections.Generic.IEnumerable{string},Decoherence.CommandLineSerialization.ISpecs,OnDeserialized?,OnMatchNothing?)"/>
         /// </summary>
         /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
         /// <param name="specs">命令行参数说明</param>
@@ -50,8 +50,8 @@ namespace Decoherence.CommandLineSerialization
         public void Deserialize(
             LinkedList<string> argList, 
             ISpecs specs,
-            CommandLineSerializer.OnDeserialized? onDeserialized,
-            CommandLineSerializer.OnMatchNothing? onMatchNothing)
+            OnDeserialized? onDeserialized,
+            OnMatchNothing? onMatchNothing)
         {
             var nodeAfterDemarcate = _DeserializeOptions(argList.First, specs, onDeserialized, onMatchNothing);
             _DeserializeArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
@@ -148,7 +148,7 @@ namespace Decoherence.CommandLineSerialization
 
         #region 反序列化相关
 
-        private LinkedListNode<string>? _DeserializeOptions(LinkedListNode<string>? node, ISpecs specs, CommandLineSerializer.OnDeserialized? onDeserialized, CommandLineSerializer.OnMatchNothing? onMatchNothing)
+        private LinkedListNode<string>? _DeserializeOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
         {
             Dictionary<IOption, List<string>> parsingMultiValueOptions = new();
             StringBuilder shortOptionHolder = new();
@@ -259,7 +259,7 @@ namespace Decoherence.CommandLineSerialization
             return nodeAfterDemarcate;
         }
 
-        private void _DeserializeArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, CommandLineSerializer.OnDeserialized? onDeserialized, CommandLineSerializer.OnMatchNothing? onMatchNothing)
+        private void _DeserializeArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
         {
             if (specs.Arguments.Count <= 0)
                 return;
@@ -325,7 +325,7 @@ namespace Decoherence.CommandLineSerialization
             }
         }
         
-        private IOption? _ParseParsingOption(string? arg, CommandLineSerializer.OnDeserialized? onDeserialized, IOption parsingOption, IReadOnlyDictionary<IOption, List<string>> parsingMultiValueOptions)
+        private IOption? _ParseParsingOption(string? arg, OnDeserialized? onDeserialized, IOption parsingOption, IReadOnlyDictionary<IOption, List<string>> parsingMultiValueOptions)
         {
             if (parsingOption.ValueType == ValueType.Single)
             {
@@ -365,7 +365,7 @@ namespace Decoherence.CommandLineSerialization
             return false;
         }
 
-        private void _DeserializeOption(CommandLineSerializer.OnDeserialized? onDeserialized, IOption option, string? value, IDictionary<IOption, List<string>> parsingMultiValueOptions, ref IOption? parsingOption)
+        private void _DeserializeOption(OnDeserialized? onDeserialized, IOption option, string? value, IDictionary<IOption, List<string>> parsingMultiValueOptions, ref IOption? parsingOption)
         {
             if (option.ValueType == ValueType.Non)
             {
