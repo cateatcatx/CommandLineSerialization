@@ -46,6 +46,17 @@ namespace Decoherence.CommandLineSerialization
         {
             return mValueSerializer.DeserializeSplitedSingleValue(this, objType, argList);
         }
+
+        /// <summary>
+        /// 反序列化对象
+        /// </summary>
+        /// <param name="objType">对象类型</param>
+        /// <param name="commandLine">命令行参数</param>
+        /// <returns>结果对象</returns>
+        public object? DeserializeObject(Type objType, string commandLine)
+        {
+            return mValueSerializer.DeserializeSingleValue(this, objType, commandLine);
+        }
         
         /// <summary>
         /// 将命令行参数作为参数调用函数

@@ -130,7 +130,19 @@ namespace Decoherence.CommandLineSerialization
 
         public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            throw new NotImplementedException();
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+            
+            var memberSpecs = new MemberSpecs(objType);
+            memberSpecs.Init();
+
+            var argList = serializer.Serialize(memberSpecs, spec =>
+            {
+                Debug.Assert(memberSpecs.TryGetMember(spec, out var memberInfo));
+                return memberInfo.GetValue(obj);
+            });
+
+            return ImplUtil.MergeCommandLine(argList);
         }
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)

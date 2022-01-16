@@ -40,5 +40,20 @@ namespace Decoherence.SystemExtensions
                 throw new InvalidOperationException($"{memberInfo} can not set value.");
             }
         }
+
+        public static object? GetValue(this MemberInfo memberInfo, object? obj)
+        {
+            if (memberInfo is PropertyInfo propertyInfo)
+            {
+                return propertyInfo.GetValue(obj);
+            }
+
+            if (memberInfo is FieldInfo fieldInfo)
+            {
+                return fieldInfo.GetValue(obj);
+            }
+
+            throw new InvalidOperationException($"{memberInfo} can not get value.");
+        }
     }
 }

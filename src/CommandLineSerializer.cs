@@ -12,7 +12,12 @@ namespace Decoherence.CommandLineSerialization
 
         public CommandLineSerializer(IValueSerializer? valueSerializer = null)
         {
-            mValueSerializer = valueSerializer ?? new BuiltinIntSerializer();
+            mValueSerializer = valueSerializer ?? new BuiltinValueSerializer();
+        }
+
+        public string SerializeObject(object obj)
+        {
+            return mValueSerializer.SerializeSingleValue(this, obj.GetType(), obj);
         }
 
         public LinkedList<string> Serialize(ISpecs specs, OnSerialize? onSerialize)
@@ -73,7 +78,7 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        private void _SerializeArguments(IReadOnlyList<IArgument> arguments, LinkedList<string> argList, OnSerialize? onSerialize)
+        private void _SerializeArguments(IEnumerable<IArgument> arguments, LinkedList<string> argList, OnSerialize? onSerialize)
         {
             foreach (var argument in arguments)
             {
