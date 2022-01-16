@@ -11,19 +11,14 @@ namespace Decoherence.CommandLineSerialization
             return objType == typeof(int);
         }
 
-        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType, bool matched)
         {
-            return 1;
+            return matched ? 1 : 0;
         }
 
         public object? DeserializeSingleValue(CommandLineSerializer serializer, Type objType, string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? 0 : int.Parse(value);
-        }
-
-        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
-        {
-            throw new InvalidOperationException();
         }
 
         public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
@@ -42,11 +37,6 @@ namespace Decoherence.CommandLineSerialization
                 throw new InvalidOperationException();
             
             return obj.ToString();
-        }
-
-        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
-        {
-            throw new InvalidOperationException();
         }
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)

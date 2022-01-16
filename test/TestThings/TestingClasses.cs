@@ -1,4 +1,5 @@
-﻿using Decoherence.CommandLineSerialization.Attributes;
+﻿using System.Collections.Generic;
+using Decoherence.CommandLineSerialization.Attributes;
 
 namespace Decoherence.CommandLineSerialization.Test
 {
@@ -85,5 +86,11 @@ namespace Decoherence.CommandLineSerialization.Test
 
             return FieldA == other.FieldA && FieldB.Equals(other.FieldB);
         }
+    }
+
+    public class TestingClass6
+    {
+        [Argument]
+        public List<TestingClass1> FieldA;
     }
 }

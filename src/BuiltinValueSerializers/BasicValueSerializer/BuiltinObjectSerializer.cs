@@ -11,66 +11,6 @@ namespace Decoherence.CommandLineSerialization
 {
     public class BuiltinObjectSerializer : IValueSerializer
     {
-        public static ConstructorInfo FindConstructor(Type ObjType)
-        {
-            var constructors = ObjType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            ConstructorInfo? ret = null;
-            
-            // 1 有标签的
-            foreach (var constructor in constructors)
-            {
-                var attr = constructor.GetCustomAttribute<ConstructorAttribute>();
-                if (attr != null)
-                {
-                    ret = constructor;
-                    break;
-                }
-            }
-            
-            // 2 参数里有标签的
-            if (ret == null)
-            {
-                foreach (var constructor in constructors)
-                {
-                    if (constructor.GetCustomAttribute<IgnoreAttribute>() != null)
-                    {
-                        continue;
-                    }
-                    
-                    if (constructor.GetParameters().Any(paramInfo => paramInfo.GetCustomAttribute<SpecAttribute>() != null))
-                    {
-                        ret = constructor;
-                        break;
-                    }
-                }
-            }
-            
-            // 3 参数最多的public构造函数
-            if (ret == null)
-            {
-                var maxParamCount = int.MinValue;
-                foreach (var constructor in constructors)
-                {
-                    if (!constructor.IsPublic || constructor.GetCustomAttribute<IgnoreAttribute>() != null)
-                        continue;
-                    
-                    var l = constructor.GetParameters().Length;
-                    if (l > maxParamCount)
-                    {
-                        ret = constructor;
-                        maxParamCount = l;
-                    }
-                }
-            }
-
-            if (ret == null)
-            {
-                throw new InvalidOperationException($"No valid constructor for {ObjType}.");
-            }
-
-            return ret;
-        }
-        
         private readonly MethodInvoker mMethodInvoker = new();
         
         public bool CanHandleType(Type objType)
@@ -78,7 +18,7 @@ namespace Decoherence.CommandLineSerialization
             return !objType.IsPrimitive;
         }
 
-        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType, bool matched)
         {
             throw new InvalidOperationException();
         }
@@ -91,32 +31,7 @@ namespace Decoherence.CommandLineSerialization
             }
             
             var argList = ImplUtil.SplitCommandLine(value);
-            return DeserializeSplitedSingleValue(serializer, objType, argList);
-        }
-
-        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
-        {
-            var constructorSpecs = new MethodSpecs(FindConstructor(objType));
-            constructorSpecs.Init();
-            var memberSpecs = new MemberSpecs(objType);
-            memberSpecs.Init();
-
-            var obj = mMethodInvoker.InvokeMethod(serializer, constructorSpecs, null, argList);
-            Debug.Assert(obj != null);
-            
-            serializer.Deserialize(
-                argList, 
-                memberSpecs,
-                (spec, memberValue) =>
-                {
-                    if (memberSpecs.TryGetMember(spec, out var memberInfo))
-                    {
-                        memberInfo.SetValue(obj, memberValue);
-                    }
-                }, 
-                null);
-
-            return obj;
+            return serializer.DeserializeObject(objType, argList);
         }
 
         public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
@@ -144,11 +59,6 @@ namespace Decoherence.CommandLineSerialization
             });
 
             return ImplUtil.MergeCommandLine(argList);
-        }
-
-        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
-        {
-            throw new NotImplementedException();
         }
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)

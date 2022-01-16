@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -15,10 +17,48 @@ namespace Decoherence.CommandLineSerialization
         public delegate void OnMatchNothing(ISpec spec);
 
         private readonly IValueSerializer mValueSerializer;
+        private readonly MethodInvoker mMethodInvoker;
 
         public CommandLineSerializer(IValueSerializer? valueSerializer = null)
         {
             mValueSerializer = valueSerializer ?? new BuiltinValueSerializer();
+            mMethodInvoker = new MethodInvoker();
+        }
+
+        public object? DeserializeObject(
+            Type objType,
+            IEnumerable<string> args,
+            out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(args);
+            return DeserializeObject(objType, remainArgs);
+        }
+
+        public object? DeserializeObject(
+            Type objType, 
+            LinkedList<string> argList)
+        {
+            var constructorSpecs = new MethodSpecs(ImplUtil.FindConstructor(objType));
+            constructorSpecs.Init();
+            var memberSpecs = new MemberSpecs(objType);
+            memberSpecs.Init();
+
+            var obj = mMethodInvoker.InvokeMethod(this, constructorSpecs, null, argList);
+            Debug.Assert(obj != null);
+            
+            Deserialize(
+                argList, 
+                memberSpecs,
+                (spec, memberValue) =>
+                {
+                    if (memberSpecs.TryGetMember(spec, out var memberInfo))
+                    {
+                        memberInfo.SetValue(obj, memberValue);
+                    }
+                }, 
+                null);
+
+            return obj;
         }
         
         /// <summary>
@@ -253,7 +293,14 @@ namespace Decoherence.CommandLineSerialization
             // 处理未匹配的option
             foreach (var option in options.Values.Where(option => !parsedOptions.Contains(option)))
             {
-                onMatchNothing?.Invoke(option);
+                if (option.ValueType == ValueType.Non)
+                {// NonValue比较特殊，未匹配也要走序列化
+                    onDeserialized?.Invoke(option, _DeserializeNonValue(option, false));
+                }
+                else
+                {
+                    onMatchNothing?.Invoke(option);
+                }
             }
 
             return nodeAfterDemarcate;
@@ -369,7 +416,7 @@ namespace Decoherence.CommandLineSerialization
         {
             if (option.ValueType == ValueType.Non)
             {
-                onDeserialized?.Invoke(option, _DeserializeNonValue(option));
+                onDeserialized?.Invoke(option, _DeserializeNonValue(option, true));
             }
             else if (option.ValueType == ValueType.Single)
             {
@@ -441,9 +488,9 @@ namespace Decoherence.CommandLineSerialization
             return !match.Success || match.Groups[1].Value != "-";
         }
         
-        private object? _DeserializeNonValue(ISpec spec)
+        private object? _DeserializeNonValue(ISpec spec, bool matched)
         {
-            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNonValue(this, spec.ObjType) : mValueSerializer.DeserializeNonValue(this, spec.ObjType);
+            return spec.CanHandleType(spec.ObjType) ? spec.DeserializeNonValue(this, spec.ObjType, matched) : mValueSerializer.DeserializeNonValue(this, spec.ObjType, matched);
         }
 
         private object? _DeserializeSingleValue(ISpec spec, string? value)

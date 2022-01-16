@@ -37,11 +37,16 @@ namespace Decoherence.CommandLineSerialization.Test
             Assert.True(string.Join(' ', remainArgs) == "3");
         }
 
+        [Test]
+        public void TestComplexList()
+        {
+            var obj = _Deserialize<TestingClass6>("\"--FieldA 1 --FieldB 1\" \"--FieldA 2 --FieldB 2\"", out var remainArgs);
+        }
+
         private T _Deserialize<T>(string commandLine, out LinkedList<string> remainArgs)
         {
             CommandLineSerializer serializer = new();
-            BuiltinValueSerializer valueSerializer = new BuiltinValueSerializer();
-            return (T)valueSerializer.DeserializeSplitedSingleValue(serializer, typeof(T), commandLine.Split(' '), out remainArgs)!;
+            return (T)serializer.DeserializeObject(typeof(T), ImplUtil.SplitCommandLine(commandLine), out remainArgs)!;
         }
     }
 }

@@ -7,34 +7,29 @@ namespace Decoherence.CommandLineSerialization
 {
     public class BuiltinListSerializer : IValueSerializer
     {
+        private IValueSerializer? mValueSerializer;
+        private IValueSerializer ValueSerializer => mValueSerializer ??= new BuiltinValueSerializer();
+        
         public bool CanHandleType(Type objType)
         {
             return typeof(IList).IsAssignableFrom(objType);
         }
 
-        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType, bool matched)
         {
             throw new InvalidOperationException();
         }
 
         public object? DeserializeSingleValue(CommandLineSerializer serializer, Type objType, string? value)
         {
-            if (value is null)
-                return null;
-            
             return string.IsNullOrWhiteSpace(value) 
                 ? null 
-                : _Deserialize(objType, value.Split(','));
-        }
-
-        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
-        {
-            return _Deserialize(objType, new List<string>(argList));
+                : _Deserialize(serializer, objType, value.Split(','));
         }
 
         public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
         {
-            return _Deserialize(objType, values);
+            return _Deserialize(serializer, objType, values);
         }
 
         public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
@@ -44,46 +39,44 @@ namespace Decoherence.CommandLineSerialization
 
         public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            return string.Join(",", SerializeSplitedSingleValue(serializer, objType, obj));
+            return string.Join(",", SerializeMultiValue(serializer, objType, obj));
         }
 
-        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
             var argList = new LinkedList<string>();
             if (obj is IList list)
             {
                 foreach (var item in list)
                 {
-                    argList.AddLast(item.ToString());
+                    argList.AddLast(ValueSerializer.SerializeSingleValue(serializer, objType, item));
                 }
             }
 
             return argList;
         }
 
-        public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
+        private object? _Deserialize(CommandLineSerializer serializer, Type objType, IList<string> values)
         {
-            return SerializeSplitedSingleValue(serializer, objType, obj);
-        }
-
-        private static object? _Deserialize(Type objType, IList values)
-        {
-            Type? innerType = null;
-            if (objType.HasElementType)
-            {
-                innerType = objType.GetElementType();
-            }
-
+            Type? itemType = ReflectUtil.GetListItemType(objType);
             IList list = ReflectUtil.CreateList(objType, values.Count);
             for (var i = 0; i < values.Count; ++i)
             {
-                object? v = values[i];
-                if (innerType != null)
+                var v = values[i];
+                object? obj = v;
+                if (itemType != null)
                 {
-                    v = Convert.ChangeType(values[i], innerType);
+                    obj = ValueSerializer.DeserializeSingleValue(serializer, itemType, v);
                 }
 
-                list[i] = v;
+                if (list is Array array)
+                {
+                    array.SetValue(obj, i);
+                }
+                else
+                {
+                    list.Add(obj);
+                }
             }
 
             return list;
