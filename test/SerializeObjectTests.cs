@@ -27,12 +27,12 @@ namespace Decoherence.CommandLineSerialization.Test
                 },
             };
 
-            CommandLineSerializer serializer = new CommandLineSerializer();
-            var commandLine = serializer.SerializeObject(obj);
+            CommandLineSerializer serializer = new();
+            BuiltinValueSerializer valueSerializer = new();
+            var commandLine = valueSerializer.SerializeSingleValue(serializer, obj.GetType(), obj);
             Console.WriteLine(commandLine);
 
-            CommandLineDeserializer deserializer = new CommandLineDeserializer();
-            var obj2 = deserializer.DeserializeObject(typeof(TestingClass5), commandLine);
+            var obj2 = valueSerializer.DeserializeSingleValue(serializer, typeof(TestingClass5), commandLine);
 
             Assert.IsTrue(obj.Equals(obj2));
         }

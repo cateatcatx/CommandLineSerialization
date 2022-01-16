@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Decoherence.CommandLineSerialization.Attributes;
 
@@ -72,7 +71,7 @@ namespace Decoherence.CommandLineSerialization
                         paramInfo.Name,
                         defaultValueType,
                         null)
-                    : new Argument(defaultValueType, paramInfo.ParameterType, 0, null);
+                    : new Argument(defaultValueType, paramInfo.ParameterType);
 
                 mParameterOrderSpecs.Add(spec);
                 mSpecs.AddSpec(spec);

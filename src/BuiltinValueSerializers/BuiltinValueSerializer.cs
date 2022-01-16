@@ -12,7 +12,7 @@ namespace Decoherence.CommandLineSerialization
         {
             BuiltinIntSerializer builtinIntSerializer = new();
             
-            mSerializer = new List<IValueSerializer>()
+            mSerializer = new List<IValueSerializer>
             {
                 builtinIntSerializer,
                 new BuiltinListSerializer(),
@@ -20,7 +20,7 @@ namespace Decoherence.CommandLineSerialization
             };
             
             // 预cache
-            mType2Serializer = new Dictionary<Type, IValueSerializer>()
+            mType2Serializer = new Dictionary<Type, IValueSerializer>
             {
                 {typeof(int), builtinIntSerializer},
             };
@@ -31,44 +31,44 @@ namespace Decoherence.CommandLineSerialization
             throw new NotImplementedException();
         }
 
-        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
         {
-            if (!_TryGetSerializer(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serial))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeNonValue(deserializer, objType);
+            return serial.DeserializeNonValue(serializer, objType);
         }
 
-        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineSerializer serializer, Type objType, string? value)
         {
-            if (!_TryGetSerializer(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serial))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeSingleValue(deserializer, objType, value);
+            return serial.DeserializeSingleValue(serializer, objType, value);
         }
 
-        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
+        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
         {
-            if (!_TryGetSerializer(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serial))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeSplitedSingleValue(deserializer, objType, argList);
+            return serial.DeserializeSplitedSingleValue(serializer, objType, argList);
         }
 
-        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
+        public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
         {
-            if (!_TryGetSerializer(objType, out var serializer))
+            if (!_TryGetSerializer(objType, out var serial))
             {
                 throw new InvalidOperationException(_GenCantSerializeErr(objType));
             }
 
-            return serializer.DeserializeMultiValue(deserializer, objType, values);
+            return serial.DeserializeMultiValue(serializer, objType, values);
         }
 
         public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
@@ -89,6 +89,16 @@ namespace Decoherence.CommandLineSerialization
             }
 
             return serial.SerializeSingleValue(serializer, objType, obj);
+        }
+
+        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            if (!_TryGetSerializer(objType, out var serial))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serial.SerializeSplitedSingleValue(serializer, objType, obj);
         }
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)

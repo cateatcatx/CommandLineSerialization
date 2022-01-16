@@ -12,7 +12,7 @@ namespace Decoherence.SystemExtensions
                 return propertyInfo.CanWrite;
             }
 
-            return memberInfo is FieldInfo fieldInfo;
+            return memberInfo is FieldInfo;
         }
 
         public static bool CanRead(this MemberInfo memberInfo)
@@ -22,7 +22,7 @@ namespace Decoherence.SystemExtensions
                 return propertyInfo.CanRead;
             }
 
-            return memberInfo is FieldInfo fieldInfo;
+            return memberInfo is FieldInfo;
         }
 
         public static void SetValue(this MemberInfo memberInfo, object? obj, object? value)

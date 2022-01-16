@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Decoherence.SystemExtensions
+﻿namespace Decoherence.SystemExtensions
 {
     public static class StringExtensions
     {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using Decoherence.CommandLineSerialization.Attributes;
 
@@ -32,7 +31,7 @@ namespace Decoherence.CommandLineSerialization
 
         public static string MergeCommandLine(IEnumerable<string> argList)
         {
-            StringBuilder sb = new StringBuilder("");
+            StringBuilder sb = new("");
             foreach (var arg in argList)
             {
                 if (arg.Contains(" ") || arg.Contains("\t"))
@@ -57,7 +56,7 @@ namespace Decoherence.CommandLineSerialization
             return sb.ToString();
         }
 
-        public static LinkedList<string> SplitCommandLine(string commandLine)
+        public static LinkedList<string> SplitCommandLine(string? commandLine)
         {
             LinkedList<string> argList = new();
             if (string.IsNullOrWhiteSpace(commandLine))

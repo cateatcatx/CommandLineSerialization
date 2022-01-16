@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace Decoherence.CommandLineSerialization.Test
@@ -40,8 +39,9 @@ namespace Decoherence.CommandLineSerialization.Test
 
         private T _Deserialize<T>(string commandLine, out LinkedList<string> remainArgs)
         {
-            CommandLineDeserializer deserializer = new();
-            return (T)deserializer.DeserializeObject(typeof(T), commandLine.Split(' '), out remainArgs)!;
+            CommandLineSerializer serializer = new();
+            BuiltinValueSerializer valueSerializer = new BuiltinValueSerializer();
+            return (T)valueSerializer.DeserializeSplitedSingleValue(serializer, typeof(T), commandLine.Split(' '), out remainArgs)!;
         }
     }
 }

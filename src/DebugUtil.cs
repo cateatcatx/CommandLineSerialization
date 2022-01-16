@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization

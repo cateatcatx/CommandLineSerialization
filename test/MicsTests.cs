@@ -61,7 +61,7 @@ namespace Decoherence.CommandLineSerialization.Test
         {
             try
             {
-                var argList = new List<string>(ImplUtil.SplitCommandLine("\"1 2"));
+                new List<string>(ImplUtil.SplitCommandLine("\"1 2"));
             }
             catch (InvalidOperationException)
             {

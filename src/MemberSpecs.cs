@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Decoherence.CommandLineSerialization.Attributes;
 using Decoherence.SystemExtensions;
@@ -114,7 +113,7 @@ namespace Decoherence.CommandLineSerialization
             var objType = (memberInfo is PropertyInfo propertyInfo) ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
             return attr != null ?
                 ImplUtil.GenerateSpecByAttribute(attr, objType, memberInfo.Name, ValueType.Single, null) :
-                new Option(memberInfo.Name, ValueType.Single, objType, null);
+                new Option(memberInfo.Name, ValueType.Single, objType);
         }
     }
 }

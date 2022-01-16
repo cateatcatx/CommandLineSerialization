@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+// ReSharper disable ReturnTypeCanBeNotNullable
 
 namespace Decoherence.CommandLineSerialization
 {
@@ -10,29 +11,29 @@ namespace Decoherence.CommandLineSerialization
             return objType == typeof(int);
         }
 
-        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
         {
-            throw new InvalidOperationException();
+            return 1;
         }
 
-        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineSerializer serializer, Type objType, string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? 0 : int.Parse(value);
         }
 
-        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
+        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
         {
             throw new InvalidOperationException();
         }
 
-        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
+        public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
         {
             throw new InvalidOperationException();
         }
 
         public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
@@ -43,9 +44,14 @@ namespace Decoherence.CommandLineSerialization
             return obj.ToString();
         }
 
+        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new InvalidOperationException();
+        }
+
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            throw new NotImplementedException();
+            throw new InvalidOperationException();
         }
     }
 }

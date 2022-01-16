@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Decoherence.CommandLineSerialization.Attributes;
 using Decoherence.SystemExtensions;
+// ReSharper disable ReturnTypeCanBeNotNullable
 
 namespace Decoherence.CommandLineSerialization
 {
@@ -77,12 +78,12 @@ namespace Decoherence.CommandLineSerialization
             return !objType.IsPrimitive;
         }
 
-        public object? DeserializeNonValue(CommandLineDeserializer deserializer, Type objType)
+        public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType)
         {
             throw new InvalidOperationException();
         }
 
-        public object? DeserializeSingleValue(CommandLineDeserializer deserializer, Type objType, string? value)
+        public object? DeserializeSingleValue(CommandLineSerializer serializer, Type objType, string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -90,20 +91,20 @@ namespace Decoherence.CommandLineSerialization
             }
             
             var argList = ImplUtil.SplitCommandLine(value);
-            return DeserializeSplitedSingleValue(deserializer, objType, argList);
+            return DeserializeSplitedSingleValue(serializer, objType, argList);
         }
 
-        public object? DeserializeSplitedSingleValue(CommandLineDeserializer deserializer, Type objType, LinkedList<string> argList)
+        public object? DeserializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, LinkedList<string> argList)
         {
             var constructorSpecs = new MethodSpecs(FindConstructor(objType));
             constructorSpecs.Init();
             var memberSpecs = new MemberSpecs(objType);
             memberSpecs.Init();
 
-            var obj = mMethodInvoker.InvokeMethod(deserializer, constructorSpecs, null, argList);
+            var obj = mMethodInvoker.InvokeMethod(serializer, constructorSpecs, null, argList);
             Debug.Assert(obj != null);
             
-            deserializer.Deserialize(
+            serializer.Deserialize(
                 argList, 
                 memberSpecs,
                 (spec, memberValue) =>
@@ -118,7 +119,7 @@ namespace Decoherence.CommandLineSerialization
             return obj;
         }
 
-        public object? DeserializeMultiValue(CommandLineDeserializer deserializer, Type objType, List<string> values)
+        public object? DeserializeMultiValue(CommandLineSerializer serializer, Type objType, List<string> values)
         {
             throw new InvalidOperationException();
         }
@@ -143,6 +144,11 @@ namespace Decoherence.CommandLineSerialization
             });
 
             return ImplUtil.MergeCommandLine(argList);
+        }
+
+        public LinkedList<string> SerializeSplitedSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
+        {
+            throw new NotImplementedException();
         }
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)

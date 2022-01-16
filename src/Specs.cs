@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+// ReSharper disable once RedundantUsingDirective
 using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization

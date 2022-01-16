@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using NUnit.Framework;
-using Decoherence.CommandLineSerialization;
-using System.Linq;
 
 namespace Decoherence.CommandLineSerialization.Test
 {
@@ -113,16 +111,15 @@ namespace Decoherence.CommandLineSerialization.Test
 
         private object? _Invoke(string funName, string commandLine, out LinkedList<string> remainArgs)
         {
-            CommandLineDeserializer deserializer = new();
-            
-            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, null, commandLine.Split(' '), out remainArgs);
+            return _Invoke(funName, commandLine.Split(' '), out remainArgs);
         }
         
         private object? _Invoke(string funName, IEnumerable<string> args, out LinkedList<string> remainArgs)
         {
-            CommandLineDeserializer deserializer = new();
+            CommandLineSerializer serializer = new();
+            MethodInvoker methodInvoker = new();
             
-            return deserializer.InvokeMethod(typeof(TestingMethods).GetMethod(funName)!, null, args, out remainArgs);
+            return methodInvoker.InvokeMethod(serializer, typeof(TestingMethods).GetMethod(funName)!, null, args, out remainArgs);
         }
     }
 }

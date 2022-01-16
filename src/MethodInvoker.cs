@@ -7,9 +7,50 @@ namespace Decoherence.CommandLineSerialization
     public class MethodInvoker
     {
         /// <summary>
+        /// <inheritdoc cref="InvokeMethod(Decoherence.CommandLineSerialization.CommandLineSerializer,Decoherence.CommandLineSerialization.MethodSpecs,object?,System.Collections.Generic.LinkedList{string})"/>
+        /// </summary>
+        /// <param name="serializer">命令行反序列器</param>
+        /// <param name="method">待调用函数</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <returns>函数返回值</returns>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="argList"/>中的参数不足</exception>
+        public object? InvokeMethod(
+            CommandLineSerializer serializer,
+            MethodBase method,
+            object? obj,
+            LinkedList<string> argList)
+        {
+            return InvokeMethod(serializer, new MethodSpecs(method), obj, argList);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="InvokeMethod(Decoherence.CommandLineSerialization.CommandLineSerializer,Decoherence.CommandLineSerialization.MethodSpecs,object?,System.Collections.Generic.LinkedList{string})"/>
+        /// </summary>
+        /// <param name="serializer">命令行反序列器</param>
+        /// <param name="method">待调用函数</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="args">命令行参数</param>
+        /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
+        /// <returns>函数返回值</returns>
+        /// <exception cref="ArgumentException">
+        ///     <paramref name="args"/>中的参数不足</exception>
+        public object? InvokeMethod(
+            CommandLineSerializer serializer,
+            MethodBase method,
+            object? obj,
+            IEnumerable<string> args,
+            out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(args);
+            return InvokeMethod(serializer, new MethodSpecs(method), obj, remainArgs);
+        }
+
+        /// <summary>
         /// 调用函数
         /// </summary>
-        /// <param name="deserializer">命令行反序列器</param>
+        /// <param name="serializer">命令行反序列器</param>
         /// <param name="methodSpecs">函数的参数说明</param>
         /// <param name="obj">调用函数时的this对象</param>
         /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
@@ -17,7 +58,7 @@ namespace Decoherence.CommandLineSerialization
         /// <exception cref="ArgumentException">
         ///     <paramref name="argList"/>中的参数不足</exception>
         public object? InvokeMethod(
-            CommandLineDeserializer deserializer,
+            CommandLineSerializer serializer,
             MethodSpecs methodSpecs,
             object? obj,
             LinkedList<string> argList)
@@ -28,7 +69,7 @@ namespace Decoherence.CommandLineSerialization
             var parameters = new object?[length];
             var touchedIndexes = new bool[length];
             
-            deserializer.Deserialize(argList, methodSpecs,
+            serializer.Deserialize(argList, methodSpecs,
                 (spec, paramObj) =>
                 {
                     if (methodSpecs.TryGetParameterIndex(spec, out var index) && 0 <= index && index < length)
@@ -58,10 +99,8 @@ namespace Decoherence.CommandLineSerialization
             {
                 return constructorInfo.Invoke(parameters);
             }
-            else
-            {
-                return method.Invoke(obj, parameters);
-            }
+
+            return method.Invoke(obj, parameters);
         }
     }
 }

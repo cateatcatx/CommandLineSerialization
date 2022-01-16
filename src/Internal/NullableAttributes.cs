@@ -1,11 +1,13 @@
 // https://github.com/dotnet/runtime/blob/527f9ae88a0ee216b44d556f9bdc84037fe0ebda/src/libraries/System.Private.CoreLib/src/System/Diagnostics/CodeAnalysis/NullableAttributes.cs
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 #pragma warning disable
 #define INTERNAL_NULLABLE_ATTRIBUTES
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+// ReSharper disable once EmptyNamespace
 namespace System.Diagnostics.CodeAnalysis
 {
 #if NETSTANDARD2_0 ||  NETCOREAPP2_0 ||  NETCOREAPP2_1 ||  NETCOREAPP2_2 || NET45 || NET451 || NET452 || NET46 || NET461 || NET462 || NET47 || NET471 || NET472 || NET48
