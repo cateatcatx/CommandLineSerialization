@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Decoherence.SystemExtensions;
@@ -12,17 +10,20 @@ namespace Decoherence.CommandLineSerialization
 {
     public class CommandLineSerializer
     {
-        public delegate object? OnSerialize(ISpec spec);
-        public delegate void OnDeserialized(ISpec spec, object? obj);
-        public delegate void OnMatchNothing(ISpec spec);
-
         private readonly IValueSerializer mValueSerializer;
-        private readonly MethodInvoker mMethodInvoker;
 
         public CommandLineSerializer(IValueSerializer? valueSerializer = null)
         {
             mValueSerializer = valueSerializer ?? new BuiltinValueSerializer();
-            mMethodInvoker = new MethodInvoker();
+        }
+        
+        public object? DeserializeObject(
+            Type objType,
+            string commandLine,
+            out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(ImplUtil.SplitCommandLine(commandLine));
+            return DeserializeObject(objType, remainArgs);
         }
 
         public object? DeserializeObject(
@@ -38,81 +39,79 @@ namespace Decoherence.CommandLineSerialization
             Type objType, 
             LinkedList<string> argList)
         {
-            var constructorSpecs = new MethodSpecs(ImplUtil.FindConstructor(objType));
-            constructorSpecs.Init();
-            var memberSpecs = new MemberSpecs(objType);
-            memberSpecs.Init();
-
-            var obj = mMethodInvoker.InvokeMethod(this, constructorSpecs, null, argList);
-            Debug.Assert(obj != null);
+            var objectSpecs = mValueSerializer.GetObjectSpecs(objType);
+            if (objectSpecs == null)
+            {
+                throw new InvalidOperationException($"Type {objType} can not deserialize to object.");
+            }
             
-            Deserialize(
-                argList, 
-                memberSpecs,
-                (spec, memberValue) =>
-                {
-                    if (memberSpecs.TryGetMember(spec, out var memberInfo))
-                    {
-                        memberInfo.SetValue(obj, memberValue);
-                    }
-                }, 
-                null);
-
-            return obj;
+            objectSpecs.BeginDeserializeObject(this, argList);
+            Deserialize(argList, objectSpecs,  (spec, value) => objectSpecs.SpecDeserialized(spec, value));
+            return objectSpecs.EndDeserializeObject(this, argList);
         }
-        
+
         /// <summary>
         /// 反序列化
         /// </summary>
         /// <param name="args">命令行参数</param>
         /// <param name="specs">命令行参数说明</param>
         /// <param name="onDeserialized">当反序列化成功时调用</param>
-        /// <param name="onMatchNothing">未匹配任何参数时调用</param>
         /// <returns>反序列化后剩余的命令行参数</returns>
-        public LinkedList<string> Deserialize(
-            IEnumerable<string> args, 
+        public LinkedList<string> Deserialize(IEnumerable<string> args,
             ISpecs specs,
-            OnDeserialized? onDeserialized,
-            OnMatchNothing? onMatchNothing)
+            OnDeserialized? onDeserialized)
         {
             LinkedList<string> argList = new(args);
-            Deserialize(argList, specs, onDeserialized, onMatchNothing);
+            Deserialize(argList, specs, onDeserialized);
             return argList;
         }
-        
+
         /// <summary>
-        /// <inheritdoc cref="Deserialize(System.Collections.Generic.IEnumerable{string},Decoherence.CommandLineSerialization.ISpecs,OnDeserialized?,OnMatchNothing?)"/>
+        /// <inheritdoc cref="Deserialize(System.Collections.Generic.IEnumerable{string},Decoherence.CommandLineSerialization.ISpecs,Decoherence.CommandLineSerialization.OnDeserialized?)"/>
         /// </summary>
         /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
         /// <param name="specs">命令行参数说明</param>
         /// <param name="onDeserialized">当反序列化成功时调用</param>
-        /// <param name="onMatchNothing">未匹配任何参数时调用</param>
-        public void Deserialize(
-            LinkedList<string> argList, 
+        public void Deserialize(LinkedList<string> argList,
             ISpecs specs,
-            OnDeserialized? onDeserialized,
-            OnMatchNothing? onMatchNothing)
+            OnDeserialized? onDeserialized)
         {
-            var nodeAfterDemarcate = _DeserializeOptions(argList.First, specs, onDeserialized, onMatchNothing);
-            _DeserializeArguments(argList, nodeAfterDemarcate, specs, onDeserialized, onMatchNothing);
+            var nodeAfterDemarcate = _DeserializeOptions(argList.First, specs, onDeserialized);
+            _DeserializeArguments(argList, nodeAfterDemarcate, specs, onDeserialized);
+        }
+
+        public LinkedList<string> SerializeObject(object obj)
+        {
+            var objType = obj.GetType();
+            var objectSpecs = mValueSerializer.GetObjectSpecs(objType);
+            if (objectSpecs == null)
+            {
+                throw new InvalidOperationException($"Type {objType} can not serialize to command line.");
+            }
+            
+            objectSpecs.BeginSerializeObject(this, obj);
+            var argList = Serialize(objectSpecs, spec => objectSpecs.SpecSerialized(spec));
+            objectSpecs.EndSerializeObject(this, obj);
+
+            return argList;
         }
         
-        public LinkedList<string> Serialize(ISpecs specs, CommandLineSerializer.OnSerialize? onSerialize)
+        public LinkedList<string> Serialize(ISpecs specs, OnSerialized? onSerialized)
         {
             LinkedList<string> argList = new();
-            _SerializeOptions(specs.Options, argList, onSerialize);
-            _SerializeArguments(specs.Arguments, argList, onSerialize);
+            _SerializeOptions(specs.Options, argList, onSerialized);
+            _SerializeArguments(specs.Arguments, argList, onSerialized);
             return argList;
         }
 
         #region 序列化相关
 
-        private void _SerializeOptions(IReadOnlyDictionary<string, IOption> options, LinkedList<string> argList, CommandLineSerializer.OnSerialize? onSerialize)
+        private void _SerializeOptions(IReadOnlyDictionary<string, IOption> options, LinkedList<string> argList, OnSerialized? onSerialized)
         {
             foreach (var kv in options)
             {
                 var option = kv.Value;
-                var obj = onSerialize?.Invoke(option);
+                var obj = onSerialized?.Invoke(option);
                 var optionPrefix = option.Name.Length > 1 ? $"--{option.Name}" : $"-{option.Name}";
                 
                 if (option.ValueType == ValueType.Non)
@@ -158,14 +157,22 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        private void _SerializeArguments(IEnumerable<IArgument> arguments, LinkedList<string> argList, CommandLineSerializer.OnSerialize? onSerialize)
+        private void _SerializeArguments(IEnumerable<IArgument> arguments, LinkedList<string> argList, OnSerialized? onSerialized)
         {
+            bool addDemarcate = false;
+            
             foreach (var argument in arguments)
             {
-                var obj = onSerialize?.Invoke(argument);
+                var obj = onSerialized?.Invoke(argument);
                 
                 if (argument.ValueType == ValueType.Single)
                 {
+                    if (!addDemarcate)
+                    {
+                        argList.AddLast("--");
+                        addDemarcate = true;
+                    }
+                    
                     argList.AddLast(mValueSerializer.SerializeSingleValue(this, argument.ObjType, obj));
                     
                     continue;
@@ -175,6 +182,12 @@ namespace Decoherence.CommandLineSerialization
                 {
                     foreach (string value in mValueSerializer.SerializeMultiValue(this, argument.ObjType, obj))
                     {
+                        if (!addDemarcate)
+                        {
+                            argList.AddLast("--");
+                            addDemarcate = true;
+                        }
+                        
                         argList.AddLast(value);
                     }
                     
@@ -188,7 +201,7 @@ namespace Decoherence.CommandLineSerialization
 
         #region 反序列化相关
 
-        private LinkedListNode<string>? _DeserializeOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
+        private LinkedListNode<string>? _DeserializeOptions(LinkedListNode<string>? node, ISpecs specs, OnDeserialized? onDeserialized)
         {
             Dictionary<IOption, List<string>> parsingMultiValueOptions = new();
             StringBuilder shortOptionHolder = new();
@@ -289,24 +302,11 @@ namespace Decoherence.CommandLineSerialization
                 onDeserialized?.Invoke(option, _DeserializeMultiValue(option, values));
                 parsedOptions.Add(option);
             }
-            
-            // 处理未匹配的option
-            foreach (var option in options.Values.Where(option => !parsedOptions.Contains(option)))
-            {
-                if (option.ValueType == ValueType.Non)
-                {// NonValue比较特殊，未匹配也要走序列化
-                    onDeserialized?.Invoke(option, _DeserializeNonValue(option, false));
-                }
-                else
-                {
-                    onMatchNothing?.Invoke(option);
-                }
-            }
 
             return nodeAfterDemarcate;
         }
 
-        private void _DeserializeArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, OnDeserialized? onDeserialized, OnMatchNothing? onMatchNothing)
+        private void _DeserializeArguments(LinkedList<string> argList, LinkedListNode<string>? nodeAfterDemarcate, ISpecs specs, OnDeserialized? onDeserialized)
         {
             if (specs.Arguments.Count <= 0)
                 return;
@@ -362,13 +362,6 @@ namespace Decoherence.CommandLineSerialization
             if (parsingArgument != null)
             {
                 onDeserialized?.Invoke(parsingArgument, _DeserializeMultiValue(parsingArgument, parsingArgumentValues));
-            }
-            
-            // 处理剩余arguments
-            for (; i < arguments.Count; ++i)
-            {
-                var argument = arguments[i];
-                onMatchNothing?.Invoke(argument);
             }
         }
         

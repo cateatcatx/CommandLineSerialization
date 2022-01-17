@@ -117,9 +117,8 @@ namespace Decoherence.CommandLineSerialization.Test
         private object? _Invoke(string funName, IEnumerable<string> args, out LinkedList<string> remainArgs)
         {
             CommandLineSerializer serializer = new();
-            MethodInvoker methodInvoker = new();
             
-            return methodInvoker.InvokeMethod(serializer, typeof(TestingMethods).GetMethod(funName)!, null, args, out remainArgs);
+            return MethodInvoker.InvokeMethod(serializer, typeof(TestingMethods).GetMethod(funName)!, null, args, out remainArgs);
         }
     }
 }

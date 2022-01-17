@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+
 // ReSharper disable ReturnTypeCanBeNotNullable
 
 namespace Decoherence.CommandLineSerialization
@@ -13,6 +14,11 @@ namespace Decoherence.CommandLineSerialization
         public bool CanHandleType(Type objType)
         {
             return typeof(IList).IsAssignableFrom(objType);
+        }
+
+        public ObjectSpecs? GetObjectSpecs(Type objType)
+        {
+            return ObjectSpecs.NewSingleSpec(new Argument(ValueType.Sequence, objType), objType);
         }
 
         public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType, bool matched)
@@ -49,7 +55,7 @@ namespace Decoherence.CommandLineSerialization
             {
                 foreach (var item in list)
                 {
-                    argList.AddLast(ValueSerializer.SerializeSingleValue(serializer, objType, item));
+                    argList.AddLast(ImplUtil.MergeCommandLine(serializer.SerializeObject(item)));
                 }
             }
 
@@ -68,18 +74,23 @@ namespace Decoherence.CommandLineSerialization
                 {
                     obj = ValueSerializer.DeserializeSingleValue(serializer, itemType, v);
                 }
-
-                if (list is Array array)
-                {
-                    array.SetValue(obj, i);
-                }
-                else
-                {
-                    list.Add(obj);
-                }
+                
+                _AddValueToList(list, i, obj);
             }
 
             return list;
+        }
+
+        private void _AddValueToList(IList list, int index, object? value)
+        {
+            if (list is Array array)
+            {
+                array.SetValue(value, index);
+            }
+            else
+            {
+                list.Add(value);
+            }
         }
     }
 }

@@ -40,7 +40,10 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestComplexList()
         {
-            var obj = _Deserialize<TestingClass6>("\"--FieldA 1 --FieldB 1\" \"--FieldA 2 --FieldB 2\"", out var remainArgs);
+            var obj = _Deserialize<List<TestingClass1>>("-- \"--FieldA 1 --FieldB 1\" \"--FieldA 2 --FieldB 2\"", out var remainArgs);
+            
+            Assert.True(obj[0].FieldA == 1 && obj[0].FieldB == 1 && obj[1].FieldA == 2 && obj[1].FieldB == 2);
+            Assert.True(string.Join(' ', remainArgs) == "--");
         }
 
         private T _Deserialize<T>(string commandLine, out LinkedList<string> remainArgs)

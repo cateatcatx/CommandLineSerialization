@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using Decoherence.CommandLineSerialization.Attributes;
 
@@ -9,66 +7,6 @@ namespace Decoherence.CommandLineSerialization
 {
     public static class ImplUtil
     {
-        public static ConstructorInfo FindConstructor(Type ObjType)
-        {
-            var constructors = ObjType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            ConstructorInfo? ret = null;
-            
-            // 1 有标签的
-            foreach (var constructor in constructors)
-            {
-                var attr = constructor.GetCustomAttribute<ConstructorAttribute>();
-                if (attr != null)
-                {
-                    ret = constructor;
-                    break;
-                }
-            }
-            
-            // 2 参数里有标签的
-            if (ret == null)
-            {
-                foreach (var constructor in constructors)
-                {
-                    if (constructor.GetCustomAttribute<IgnoreAttribute>() != null)
-                    {
-                        continue;
-                    }
-                    
-                    if (constructor.GetParameters().Any(paramInfo => paramInfo.GetCustomAttribute<SpecAttribute>() != null))
-                    {
-                        ret = constructor;
-                        break;
-                    }
-                }
-            }
-            
-            // 3 参数最多的public构造函数
-            if (ret == null)
-            {
-                var maxParamCount = int.MinValue;
-                foreach (var constructor in constructors)
-                {
-                    if (!constructor.IsPublic || constructor.GetCustomAttribute<IgnoreAttribute>() != null)
-                        continue;
-                    
-                    var l = constructor.GetParameters().Length;
-                    if (l > maxParamCount)
-                    {
-                        ret = constructor;
-                        maxParamCount = l;
-                    }
-                }
-            }
-
-            if (ret == null)
-            {
-                throw new InvalidOperationException($"No valid constructor for {ObjType}.");
-            }
-
-            return ret;
-        }
-        
         public static ISpec GenerateSpecByAttribute(
             SpecAttribute attr, 
             Type objType, 

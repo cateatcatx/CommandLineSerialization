@@ -16,7 +16,7 @@ namespace Decoherence.CommandLineSerialization
         /// <returns>函数返回值</returns>
         /// <exception cref="ArgumentException">
         ///     <paramref name="argList"/>中的参数不足</exception>
-        public object? InvokeMethod(
+        public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodBase method,
             object? obj,
@@ -36,7 +36,7 @@ namespace Decoherence.CommandLineSerialization
         /// <returns>函数返回值</returns>
         /// <exception cref="ArgumentException">
         ///     <paramref name="args"/>中的参数不足</exception>
-        public object? InvokeMethod(
+        public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodBase method,
             object? obj,
@@ -57,7 +57,7 @@ namespace Decoherence.CommandLineSerialization
         /// <returns>函数返回值</returns>
         /// <exception cref="ArgumentException">
         ///     <paramref name="argList"/>中的参数不足</exception>
-        public object? InvokeMethod(
+        public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodSpecs methodSpecs,
             object? obj,
@@ -77,7 +77,7 @@ namespace Decoherence.CommandLineSerialization
                         parameters[index] = paramObj;
                         touchedIndexes[index] = true;
                     }
-                }, null);
+                });
 
             // 设置函数参数自身的默认值
             for (var i = 0; i < length; ++i)

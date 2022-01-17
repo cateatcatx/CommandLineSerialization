@@ -11,10 +11,12 @@ namespace Decoherence.CommandLineSerialization
         public BuiltinValueSerializer()
         {
             BuiltinIntSerializer builtinIntSerializer = new();
+            BuiltinStringSerializer builtinStringSerializer = new();
             
             mSerializer = new List<IValueSerializer>
             {
                 builtinIntSerializer,
+                builtinStringSerializer,
                 new BuiltinListSerializer(),
                 new BuiltinObjectSerializer(),
             };
@@ -23,12 +25,23 @@ namespace Decoherence.CommandLineSerialization
             mType2Serializer = new Dictionary<Type, IValueSerializer>
             {
                 {typeof(int), builtinIntSerializer},
+                {typeof(string), builtinStringSerializer},
             };
         }
 
         public bool CanHandleType(Type objType)
         {
             throw new NotImplementedException();
+        }
+
+        public ObjectSpecs? GetObjectSpecs(Type objType)
+        {
+            if (!_TryGetSerializer(objType, out var serial))
+            {
+                throw new InvalidOperationException(_GenCantSerializeErr(objType));
+            }
+
+            return serial.GetObjectSpecs(objType);
         }
 
         public object? DeserializeNonValue(CommandLineSerializer serializer, Type objType, bool matched)
