@@ -18,7 +18,8 @@ namespace Decoherence.CommandLineSerialization
                 builtinIntSerializer,
                 builtinStringSerializer,
                 new BuiltinListSerializer(),
-                new BuiltinObjectSerializer(),
+                new BuiltinEnumSerializer(),
+                new BuiltinObjectSerializer(), // Object最好放在最后
             };
             
             // 预cache

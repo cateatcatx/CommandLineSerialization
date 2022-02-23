@@ -4,7 +4,11 @@ using System.Linq;
 
 namespace Decoherence.SystemExtensions
 {
+#if HIDE_DECOHERENCE
+    internal static class TypeExtensions
+#else
     public static class TypeExtensions
+#endif
     {
         /// <summary>
         /// 类型是否有无参构造函数

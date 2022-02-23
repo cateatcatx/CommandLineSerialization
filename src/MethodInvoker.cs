@@ -1,11 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
     public class MethodInvoker
     {
+        public static TRet InvokeMethod<TRet>(
+            CommandLineSerializer serializer,
+            Type type,
+            string methodName,
+            object? obj,
+            LinkedList<string> argList)
+        {
+            var retObj = InvokeMethod(serializer, type, methodName, obj, argList);
+            return (TRet)retObj!;
+        }
+        
+        public static object? InvokeMethod(
+            CommandLineSerializer serializer,
+            Type type,
+            string methodName,
+            object? obj,
+            LinkedList<string> argList)
+        {
+            var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+            ThrowUtil.ThrowIfArgumentNull(method);
+
+            return InvokeMethod(serializer, method, obj, argList);
+        }
+        
+        public static TRet InvokeMethod<TRet>(
+            CommandLineSerializer serializer,
+            MethodBase method,
+            object? obj,
+            LinkedList<string> argList)
+        {
+            var retObj = InvokeMethod(serializer, new MethodSpecs(method), obj, argList);
+            return (TRet)retObj!;
+        }
+        
         /// <summary>
         /// <inheritdoc cref="InvokeMethod(Decoherence.CommandLineSerialization.CommandLineSerializer,Decoherence.CommandLineSerialization.MethodSpecs,object?,System.Collections.Generic.LinkedList{string})"/>
         /// </summary>

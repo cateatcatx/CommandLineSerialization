@@ -98,7 +98,7 @@ namespace Decoherence.CommandLineSerialization
                 },
                 (spec, value) =>
                 {
-                    Debug.Assert(memberSpecs.TryGetMember(spec, out var memberInfo));
+                    memberSpecs.TryGetMember(spec, out var memberInfo);
                     memberInfo.SetValue(deserializeObj, value);
                 },
                 (_, _) => deserializeObj,
@@ -106,7 +106,7 @@ namespace Decoherence.CommandLineSerialization
                 (_, obj) => serializeObj = obj,
                 spec =>
                 {
-                    Debug.Assert(memberSpecs.TryGetMember(spec, out var memberInfo));
+                    memberSpecs.TryGetMember(spec, out var memberInfo);
                     return memberInfo.GetValue(serializeObj);
                 },
                 (_, _) => { });
@@ -148,7 +148,7 @@ namespace Decoherence.CommandLineSerialization
 
             var argList = serializer.Serialize(memberSpecs, spec =>
             {
-                Debug.Assert(memberSpecs.TryGetMember(spec, out var memberInfo));
+                memberSpecs.TryGetMember(spec, out var memberInfo);
                 return memberInfo.GetValue(obj);
             });
 

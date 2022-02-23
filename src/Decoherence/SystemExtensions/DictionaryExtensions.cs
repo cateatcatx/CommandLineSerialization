@@ -3,7 +3,15 @@ using System.Collections.Generic;
 
 namespace Decoherence.SystemExtensions
 {
+    #if HIDE_DECOHERENCE
+    internal static class DictionaryExtensions
+#else
+#if HIDE_DECOHERENCE
+    internal static class DictionaryExtensions
+#else
     public static class DictionaryExtensions
+#endif
+#endif
     {
         public static TValue AddOrCreateValue<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, Func<TValue> createFunc)
         {

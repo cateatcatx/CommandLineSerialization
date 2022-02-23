@@ -1,6 +1,14 @@
 ﻿namespace Decoherence.SystemExtensions
 {
+    #if HIDE_DECOHERENCE
+    internal static class CharExtensions
+#else
+#if HIDE_DECOHERENCE
+    internal static class CharExtensions
+#else
     public static class CharExtensions
+#endif
+#endif
     {
         /// <summary>
         /// 是否为字母

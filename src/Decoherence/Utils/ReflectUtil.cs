@@ -4,7 +4,11 @@ using System.Reflection;
 
 namespace Decoherence
 {
+#if HIDE_DECOHERENCE
+    internal static class ReflectUtil
+#else
     public static class ReflectUtil
+#endif
     {
         public static Array CreateArray(Type type, int length)
         {

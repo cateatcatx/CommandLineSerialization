@@ -3,7 +3,11 @@ using System.Reflection;
 
 namespace Decoherence.SystemExtensions
 {
+#if HIDE_DECOHERENCE
+    internal static class MemberInfoExtensions
+#else
     public static class MemberInfoExtensions
+#endif
     {
         public static bool CanWrite(this MemberInfo memberInfo)
         {

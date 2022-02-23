@@ -34,6 +34,12 @@ namespace Decoherence.CommandLineSerialization
             remainArgs = new LinkedList<string>(args);
             return DeserializeObject(objType, remainArgs);
         }
+        
+        public T DeserializeObject<T>(LinkedList<string> argList)
+        {
+            var obj = DeserializeObject(typeof(T), argList);
+            return (T)obj!;
+        }
 
         public object? DeserializeObject(
             Type objType, 

@@ -1,6 +1,10 @@
 ﻿namespace Decoherence.SystemExtensions
 {
+#if HIDE_DECOHERENCE
+    internal static class StringExtensions
+#else
     public static class StringExtensions
+#endif
     {
         /// <summary>
         /// 判断字符串是否全为字母
