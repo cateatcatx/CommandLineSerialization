@@ -131,7 +131,17 @@ namespace Decoherence
         {
             mList.RemoveAt(index);
         }
+        
+#if NETSTANDARD2_1
 
+        public T this[Index index]
+        {
+            get => mList[index];
+            set => mList[index] = value;
+        }
+        
+#endif
+        
         public T this[int index]
         {
             get => mList[index];
