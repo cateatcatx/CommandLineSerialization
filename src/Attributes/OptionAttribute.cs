@@ -5,26 +5,27 @@ namespace Decoherence.CommandLineSerialization.Attributes
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property)]
     public class OptionAttribute : SpecAttribute
     {
-        public string? Name
+        public string? ShortName
         {
-            get => mName;
+            get => mShortName;
             set
             {
-                if (value != null)
-                {
-                    if (value.Length > 1)
-                    {
-                        if (!DebugUtil.IsValidOptionLongName(value))
-                            throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(value));
-                    }
-                    else
-                    {
-                        if (!DebugUtil.IsValidOptionShortName(value))
-                            throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(value));
-                    }
-                }
+                if (value != null && !DebugUtil.IsValidOptionShortName(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(value));
 
-                mName = value;
+                mShortName = value;
+            }
+        }
+        
+        public string? LongName
+        {
+            get => mLongName;
+            set
+            {
+                if (value != null && !DebugUtil.IsValidOptionLongName(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(value));
+
+                mLongName = value;
             }
         }
         
@@ -40,6 +41,7 @@ namespace Decoherence.CommandLineSerialization.Attributes
             }
         }
 
-        private string? mName;
+        private string? mLongName;
+        private string? mShortName;
     }
 }

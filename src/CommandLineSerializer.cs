@@ -118,7 +118,7 @@ namespace Decoherence.CommandLineSerialization
             {
                 var option = kv.Value;
                 var obj = onSerialized?.Invoke(option);
-                var optionPrefix = option.Name.Length > 1 ? $"--{option.Name}" : $"-{option.Name}";
+                var optionPrefix = option.LongName != null ? $"--{option.LongName}" : $"-{option.ShortName}"; // LongName优先
                 
                 if (option.ValueType == ValueType.Non)
                 {

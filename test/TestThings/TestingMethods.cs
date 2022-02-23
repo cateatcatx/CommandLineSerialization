@@ -9,7 +9,7 @@ namespace Decoherence.CommandLineSerialization.Test
             return $"{a},{b}";
         }
 
-        public static string Foo2(int a, [Option] int b, [Option(Name = "ccc")] int c, int d)
+        public static string Foo2(int a, [Option] int b, [Option(LongName = "ccc", ShortName = "c")] int c, int d)
         {
             return $"{a},{b},{c},{d}";
         }
@@ -29,7 +29,7 @@ namespace Decoherence.CommandLineSerialization.Test
             return $"{a},{string.Join(',', b)}";
         }
         
-        public static string Foo6(int a, [Option(Name = "bbb")] params int[] b)
+        public static string Foo6(int a, [Option(LongName = "bbb")] params int[] b)
         {
             return $"{a},{string.Join(',', b)}";
         }
@@ -39,7 +39,7 @@ namespace Decoherence.CommandLineSerialization.Test
             return $"{a},{string.Join(',', b)}";
         }
         
-        public static string Foo8(int a, [Option(Name = "bbb", ValueType = ValueType.Multi)] params int[] b)
+        public static string Foo8(int a, [Option(LongName = "bbb", ValueType = ValueType.Multi)] params int[] b)
         {
             return $"{a},{string.Join(',', b)}";
         }

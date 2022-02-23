@@ -22,7 +22,7 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestAttr()
         {
-            var ret = _Invoke(nameof(TestingMethods.Foo2), "--ccc 3 1 -b2 4", out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo2), "-c3 1 -b2 4", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "", tmp);

@@ -14,6 +14,8 @@ namespace Decoherence.CommandLineSerialization
             ValueType defaultValueType,
             IValueSerializer? defaultValueSerializer)
         {
+            ThrowUtil.ThrowIfArgumentNullOrWhiteSpace(defaultOptionName);
+            
             if (attr is ArgumentAttribute argumentAttr)
             {
                 return new Argument(argumentAttr.ValueType != ValueType.Default ? argumentAttr.ValueType : defaultValueType, 
@@ -22,8 +24,12 @@ namespace Decoherence.CommandLineSerialization
             }
 
             var optionAttr = (OptionAttribute)attr;
+            char? shortName = optionAttr.ShortName != null ? optionAttr.ShortName[0] : (defaultOptionName.Length == 1 ? defaultOptionName[0] : null);
+            string? longName = optionAttr.LongName ?? (defaultOptionName.Length > 1 ? defaultOptionName : null);
+            
             return new Option(
-                optionAttr.Name ?? defaultOptionName, 
+                shortName,
+                longName,
                 optionAttr.ValueType != ValueType.Default ? optionAttr.ValueType : defaultValueType, 
                 objType, 
                 optionAttr.Serializer ?? defaultValueSerializer);

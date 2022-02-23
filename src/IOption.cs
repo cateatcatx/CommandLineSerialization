@@ -2,6 +2,7 @@
 {
    public interface IOption : ISpec
     {
-        string Name { get; }
+        string? LongName { get; }
+        char? ShortName { get; }
     }
 }

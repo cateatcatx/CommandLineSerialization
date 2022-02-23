@@ -27,6 +27,9 @@ namespace Decoherence.CommandLineSerialization
         
         public static bool IsValidOptionLongName(string longName)
         {
+            if (longName.Length <= 1) // 要求长名最少2个字符，这样实现简单
+                return false;
+            
             foreach (var ch in longName)
             {
                 // 合法：字母、数字和-

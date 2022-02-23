@@ -15,9 +15,14 @@ namespace Decoherence.CommandLineSerialization
         
         public void AddOption(IOption option)
         {
-            if (!mOptions.TryAdd(option.Name, option))
+            if (option.ShortName != null && !mOptions.TryAdd(option.ShortName.ToString(), option))
             {
-                throw new ArgumentException($"Option with name '{option.Name}' already exists.");
+                throw new ArgumentException($"Option with short name '{option.ShortName}' already exists.");
+            }
+            
+            if (option.LongName != null && !mOptions.TryAdd(option.LongName, option))
+            {
+                throw new ArgumentException($"Option with long name '{option.LongName}' already exists.");
             }
         }
 
