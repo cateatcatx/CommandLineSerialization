@@ -49,8 +49,6 @@ namespace Decoherence.CommandLineSerialization
         /// <param name="obj">调用函数时的this对象</param>
         /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
         /// <returns>函数返回值</returns>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="argList"/>中的参数不足</exception>
         public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodBase method,
@@ -69,8 +67,6 @@ namespace Decoherence.CommandLineSerialization
         /// <param name="args">命令行参数</param>
         /// <param name="remainArgs">调用完毕后的剩余命令行参数</param>
         /// <returns>函数返回值</returns>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="args"/>中的参数不足</exception>
         public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodBase method,
@@ -90,8 +86,6 @@ namespace Decoherence.CommandLineSerialization
         /// <param name="obj">调用函数时的this对象</param>
         /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
         /// <returns>函数返回值</returns>
-        /// <exception cref="ArgumentException">
-        ///     <paramref name="argList"/>中的参数不足</exception>
         public static object? InvokeMethod(
             CommandLineSerializer serializer,
             MethodSpecs methodSpecs,
@@ -124,7 +118,7 @@ namespace Decoherence.CommandLineSerialization
                 
                 if (paramInfos[i].DefaultValue == DBNull.Value)
                 {
-                    throw new ArgumentException($"Lack of {i}th non-default parameter object.", nameof(argList));
+                    throw new InvalidOperationException($"Lack of {i+1}th non-default parameter: {paramInfos[i].Name}.");
                 }
                 
                 parameters[i] = paramInfos[i].DefaultValue;
