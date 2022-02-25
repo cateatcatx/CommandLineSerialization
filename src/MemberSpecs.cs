@@ -111,9 +111,10 @@ namespace Decoherence.CommandLineSerialization
         private ISpec _GenerateSpec(MemberInfo memberInfo, SpecAttribute? attr)
         {
             var objType = (memberInfo is PropertyInfo propertyInfo) ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
+            var defaultValueType = ImplUtil.GetDefaultValueType(objType);
             return attr != null ?
-                ImplUtil.GenerateSpecByAttribute(attr, objType, memberInfo.Name, ValueType.Single, null) :
-                new Option(memberInfo.Name, ValueType.Single, objType);
+                ImplUtil.GenerateSpecByAttribute(attr, objType, memberInfo.Name, defaultValueType, null) :
+                new Option(memberInfo.Name, defaultValueType, objType);
         }
     }
 }

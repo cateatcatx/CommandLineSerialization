@@ -12,11 +12,13 @@ namespace Decoherence.CommandLineSerialization
         {
             BuiltinIntSerializer builtinIntSerializer = new();
             BuiltinStringSerializer builtinStringSerializer = new();
+            BuiltinBoolSerializer builtinBoolSerializer = new();
             
             mSerializer = new List<IValueSerializer>
             {
                 builtinIntSerializer,
                 builtinStringSerializer,
+                builtinBoolSerializer,
                 new BuiltinListSerializer(),
                 new BuiltinEnumSerializer(),
                 new BuiltinObjectSerializer(), // Object最好放在最后
@@ -27,6 +29,7 @@ namespace Decoherence.CommandLineSerialization
             {
                 {typeof(int), builtinIntSerializer},
                 {typeof(string), builtinStringSerializer},
+                {typeof(bool), builtinBoolSerializer},
             };
         }
 

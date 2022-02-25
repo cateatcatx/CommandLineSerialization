@@ -187,5 +187,10 @@ namespace Decoherence.CommandLineSerialization
 
             return argList;
         }
+        
+        public static ValueType GetDefaultValueType(Type objType)
+        {
+            return objType == typeof(bool) ? ValueType.Non : ValueType.Single;
+        }
     }
 }

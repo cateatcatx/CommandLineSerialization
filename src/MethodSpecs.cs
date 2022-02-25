@@ -63,7 +63,7 @@ namespace Decoherence.CommandLineSerialization
             foreach (var paramInfo in parameters)
             {
                 var attr = paramInfo.GetCustomAttribute<SpecAttribute>();
-                var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ValueType.Single;
+                var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ImplUtil.GetDefaultValueType(paramInfo.ParameterType);;
                 var spec = attr != null 
                     ? ImplUtil.GenerateSpecByAttribute(
                         attr,
