@@ -216,6 +216,7 @@ namespace Decoherence.CommandLineSerialization
             IOption? parsingOption = null;
             var options = specs.Options;
             
+            // 按顺序处理每个参数，解析option
             while (node != null)
             {
                 var arg = node.Value;
@@ -307,6 +308,17 @@ namespace Decoherence.CommandLineSerialization
                 
                 onDeserialized?.Invoke(option, _DeserializeMultiValue(option, values));
                 parsedOptions.Add(option);
+            }
+            
+            // 反序列化未匹配的Non类型值
+            foreach (var option  in options.Values)
+            {
+                if (option.ValueType != ValueType.Non || parsedOptions.Contains(option))
+                {
+                    continue;
+                }
+                
+                onDeserialized?.Invoke(option, _DeserializeNonValue(option, false));
             }
 
             return nodeAfterDemarcate;
