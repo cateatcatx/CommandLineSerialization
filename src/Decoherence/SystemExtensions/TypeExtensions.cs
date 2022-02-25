@@ -29,5 +29,14 @@ namespace Decoherence.SystemExtensions
                 return paramInfos.Length == 0 || paramInfos.All(paramInfo => paramInfo.DefaultValue != DBNull.Value);
             });
         }
+
+        public static MethodBase GetMethodThrow(this Type self, string name, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+        {
+            var method = self.GetMethod(name, bindingFlags);
+            if (method == null)
+                throw new InvalidOperationException($"Can not find method {method} in {self}.");
+
+            return method;
+        }
     }
 }

@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public class CommandLineApp
+    public class CommandLineApp : ICommandLineApp
     {
-        private readonly Dictionary<string, MethodBase> mCommand2Method = new Dictionary<string, MethodBase>();
-        private MethodBase? mGlobalMethod;
+        private readonly Dictionary<string, Tuple<MethodBase, Func<object?>?>> mCommand2Method = new Dictionary<string, Tuple<MethodBase, Func<object?>?>>();
+        private readonly List<Tuple<MethodBase, Func<object?>?>> mGlobalMethods = new List<Tuple<MethodBase, Func<object?>?>>();
+
+        public event Action? AfterGlobalMethod;
 
         public int Start(IEnumerable<string> args)
         {
@@ -15,18 +18,20 @@ namespace Decoherence.CommandLineSerialization
 
             CommandLineSerializer commandLineSerializer = new CommandLineSerializer();
 
-            if (mGlobalMethod != null)
+            foreach (var (methodBase, objGetter) in mGlobalMethods)
             {
-                MethodInvoker.InvokeMethod(commandLineSerializer, mGlobalMethod, null, argList);
+                MethodInvoker.InvokeMethod(commandLineSerializer, methodBase, objGetter?.Invoke(), argList);
             }
+            
+            AfterGlobalMethod?.Invoke();
 
             var command = commandLineSerializer.DeserializeObject<string>(argList);
-            if (string.IsNullOrWhiteSpace(command) || !mCommand2Method.TryGetValue(command, out var method))
+            if (string.IsNullOrWhiteSpace(command) || !mCommand2Method.TryGetValue(command, out var tuple))
             {
                 throw new Exception($"No input command: {command}");
             }
             
-            var ret = MethodInvoker.InvokeMethod(commandLineSerializer, method, null, argList);
+            var ret = MethodInvoker.InvokeMethod(commandLineSerializer, tuple.Item1, tuple.Item2?.Invoke(), argList);
             if (ret is int retInt)
             {
                 return retInt;
@@ -35,20 +40,18 @@ namespace Decoherence.CommandLineSerialization
             return 0;
         }
 
-        public void SetGlobalMethod(Type type, string methodName)
+        public void AddGlobalMethod(MethodBase method, Func<object?>? objGetter)
         {
-            var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-            ThrowUtil.ThrowIfArgumentNull(method);
-
-            mGlobalMethod = method;
-        }
-        
-        public void AddCommand(Type type, string methodName)
-        {
-            var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
             ThrowUtil.ThrowIfArgumentNull(method);
             
-            mCommand2Method.Add(methodName, method);
+            mGlobalMethods.Add(new Tuple<MethodBase, Func<object?>?>(method, objGetter));
+        }
+
+        public void AddCommand(MethodBase method, Func<object?>? objGetter, string? commandName = null)
+        {
+            ThrowUtil.ThrowIfArgumentNull(method);
+            
+            mCommand2Method.Add(commandName ?? method.Name, new Tuple<MethodBase, Func<object?>?>(method, objGetter));
         }
     }
 }
