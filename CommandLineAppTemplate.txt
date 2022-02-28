@@ -6,13 +6,10 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxx
 
 Available options:
-  group1 xxx:
-    --opt1 arg      : xxxxxx
-    -o [--opt2] arg : xxxxxx
-
-  group2 xxxxxx:
-    opt3            : xxxxxx
-    opt4            : xxxxxx
+  --opt1 arg      : xxxxxx
+  -o [--opt2] arg : xxxxxx
+  opt3            : xxxxxx
+  opt4            : xxxxxx
 
 Available args:
   arg1            : xxxxx
