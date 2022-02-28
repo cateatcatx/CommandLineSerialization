@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Decoherence.CommandLineSerialization.Attributes;
 using Decoherence.SystemExtensions;
@@ -29,13 +30,14 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
+        private readonly int mMaxLineLength;
         private readonly PriorityList<Tuple<MethodSpecs, Func<object?>?, int>> mMethods;
         private readonly Dictionary<string, PriorityList<Tuple<Command, int>>> mGroup2Subcommands;
         private readonly PriorityList<string> mGroups;
 
         private bool mAddHelp;
 
-        public Command(string name, string? desc)
+        public Command(string name, string? desc, int? maxLineLength = null)
         {
             mMethods = new PriorityList<Tuple<MethodSpecs, Func<object?>?, int>>((tuple1, tuple2) => tuple1.Item3 - tuple2.Item3);
             mGroup2Subcommands = new Dictionary<string, PriorityList<Tuple<Command, int>>>();
@@ -49,6 +51,7 @@ namespace Decoherence.CommandLineSerialization
 
             Name = name;
             Desc = desc;
+            mMaxLineLength = maxLineLength ?? 100;
         }
         
         public void AddMethod(MethodBase method, Func<object?>? objGetter)
@@ -133,13 +136,15 @@ namespace Decoherence.CommandLineSerialization
             var commandName = commandLineSerializer.DeserializeObject<string>(argList);
             if (string.IsNullOrWhiteSpace(commandName))
             {
-                throw new Exception($"No input command");
+                Console.WriteLine($"No input command, See '{Name} --help'");
+                return null;
             }
 
             var command = Subcommands.Find(item => item.Name == commandName);
             if (command == null)
             {
-                throw new Exception($"No command named {commandName}");
+                Console.WriteLine($"No command named '{commandName}', See '{Name} --help'");
+                return null;
             }
 
             return command.Run(argList) ?? ret;
@@ -205,8 +210,7 @@ namespace Decoherence.CommandLineSerialization
         {
             if (showHelp)
             {
-                CommandLineWriter writer = new CommandLineWriter(120, "  ");
-                Draw(writer);
+                Draw(new CommandLineWriter(mMaxLineLength, "  "));
                 return BuiltinReturn.Truncate;
             }
 
@@ -214,11 +218,11 @@ namespace Decoherence.CommandLineSerialization
         }
 
         private void _HelpCommand(
-            [Argument(ValueName = "command", Desc = "待查帮助的命令")] string? commandName)
+            [Argument(ValueName = "command", Desc = "待查帮助的命令")] string? commandName = null)
         {
             if (commandName == null)
             {
-                _HelpMethod(true);
+                Draw(new CommandLineWriter(mMaxLineLength, "  "));
                 return;
             }
             
@@ -229,8 +233,7 @@ namespace Decoherence.CommandLineSerialization
                 return;
             }
             
-            CommandLineWriter writer = new CommandLineWriter(120, "  ");
-            command.Draw(writer);
+            command.Draw(new CommandLineWriter(mMaxLineLength, "  "));
         }
 
         private void _DrawUseage(IEnumerable<IOption> options, IEnumerable<IArgument> arguments, CommandLineWriter writer)
@@ -245,13 +248,19 @@ namespace Decoherence.CommandLineSerialization
                 writer.Write($" {option.GetDrawUsageHead()}");
             }
 
+            var anySubcommand = Subcommands.Any();
+            if (arguments.Any() || anySubcommand)
+            {
+                writer.Write(" [--]");
+            }
+
             // draw arguments
             foreach (var argument in arguments)
             {
                 writer.Write($" {argument.GetDrawUsageHead()}");
             }
 
-            if (mGroup2Subcommands.Count > 0)
+            if (anySubcommand)
             {
                 writer.Write($" <subcommand> [sub-options] [sub-args]");
             }

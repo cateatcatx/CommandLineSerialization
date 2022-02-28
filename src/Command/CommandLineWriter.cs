@@ -19,18 +19,18 @@ namespace Decoherence.CommandLineSerialization
         /// <summary>
         /// 当前行剩余可写的字符数
         /// </summary>
-        public int LeftCountCanWrite => CurCharCount == 0 ? mLineMaxChar - mLinePrefix.Length : mLineMaxChar - CurCharCount;
+        public int LeftCountCanWrite => CurCharCount == 0 ? mLineMaxLength - mLinePrefix.Length : mLineMaxLength - CurCharCount;
 
         /// <summary>
         /// 包括prefix
         /// </summary>
-        private readonly int mLineMaxChar;
+        private readonly int mLineMaxLength;
         private readonly string mIndentStr;
         private string mLinePrefix;
 
-        public CommandLineWriter(int lineMaxChar, string indentStr)
+        public CommandLineWriter(int lineMaxLength, string indentStr)
         {
-            mLineMaxChar = lineMaxChar;
+            mLineMaxLength = lineMaxLength;
             mIndentStr = indentStr;
             mLinePrefix = string.Empty;
         }
