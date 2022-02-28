@@ -8,24 +8,47 @@ namespace Decoherence.CommandLineSerialization
 {
     public class Command
     {
+        private const string BUILTIN_GROUP = "Default utilities";
+        
         public event Action? BeforeMethod;
         public event Action? AfterMethod;
         
         public readonly string Name;
         public readonly string? Desc;
-        
+        public IEnumerable<Command> Subcommands
+        {
+            get
+            {
+                foreach (var commands in mGroup2Subcommands.Values)
+                {
+                    foreach (var (command, _) in commands)
+                    {
+                        yield return command;
+                    }
+                }
+            }
+        }
+
         private readonly PriorityList<Tuple<MethodSpecs, Func<object?>?, int>> mMethods;
-        private readonly PriorityList<Tuple<Command, int>> mSubcommands;
+        private readonly Dictionary<string, PriorityList<Tuple<Command, int>>> mGroup2Subcommands;
+        private readonly PriorityList<string> mGroups;
+
+        private bool mAddHelp;
 
         public Command(string name, string? desc)
         {
-            mMethods = new PriorityList<Tuple<MethodSpecs, Func<object?>?, int>>((tuple1, tuple2) => tuple2.Item3 - tuple1.Item3);
-            mSubcommands = new PriorityList<Tuple<Command, int>>((tuple1, tuple2) => tuple2.Item2 - tuple1.Item2);
-            
+            mMethods = new PriorityList<Tuple<MethodSpecs, Func<object?>?, int>>((tuple1, tuple2) => tuple1.Item3 - tuple2.Item3);
+            mGroup2Subcommands = new Dictionary<string, PriorityList<Tuple<Command, int>>>();
+            mGroups = new PriorityList<string>((group1, group2) =>
+            {
+                // 保证BUILTIN_GROUP在最后
+                int value1 = group1 == BUILTIN_GROUP ? 0 : 1;
+                int value2 = group2 == BUILTIN_GROUP ? 0 : 1;
+                return value1 - value2;
+            });
+
             Name = name;
             Desc = desc;
-
-            mMethods.Add(new Tuple<MethodSpecs, Func<object?>?, int>(new MethodSpecs(typeof(Command).GetMethodThrow(nameof(_Help))), () => this, int.MinValue)); // 保证help在最后
         }
         
         public void AddMethod(MethodBase method, Func<object?>? objGetter)
@@ -37,9 +60,36 @@ namespace Decoherence.CommandLineSerialization
         
         public void AddSubcommand(Command command)
         {
+            AddSubcommand(command, BUILTIN_GROUP);
+        }
+        
+        public void AddSubcommand(Command command, string? group)
+        {
             ThrowUtil.ThrowIfArgumentNull(command);
-            
-            mSubcommands.Add(new Tuple<Command, int>(command, 0));
+
+            if (Subcommands.FindIndex(item => item.Name == command.Name) >= 0)
+                throw new ArgumentException($"Command with same name '{command.Name}' already exists.");
+
+            group ??= BUILTIN_GROUP;
+            if (mGroups.FindIndex(item => item == group) < 0)
+            {
+                // 越早注册的group排序越靠前
+                mGroups.Add(group);
+            }
+
+            var commands = mGroup2Subcommands.AddOrCreateValue(group, () => new PriorityList<Tuple<Command, int>>((tuple1, tuple2) => tuple2.Item2 - tuple1.Item2));
+            commands.Add(new Tuple<Command, int>(command, 0));
+
+            // 有Subcommand才有Help
+            if (!mAddHelp)
+            {
+                mMethods.Add(new Tuple<MethodSpecs, Func<object?>?, int>(new MethodSpecs(typeof(Command).GetMethodThrow(nameof(_HelpMethod))), () => this, -1)); // 保证help在最后
+                
+                mAddHelp = true;
+                var helpCommand = new Command("help", "帮助");
+                helpCommand.AddMethod(typeof(Command), nameof(_HelpCommand), this);
+                AddSubcommand(helpCommand);
+            }
         }
 
         public int? Run(IEnumerable<string> args, out LinkedList<string> remainArgs)
@@ -75,24 +125,24 @@ namespace Decoherence.CommandLineSerialization
             
             AfterMethod?.Invoke();
 
-            if (truncate || mSubcommands.Count <= 0)
+            if (truncate || mGroup2Subcommands.Count <= 0)
             {
                 return ret;
             }
             
-            var command = commandLineSerializer.DeserializeObject<string>(argList);
-            if (string.IsNullOrWhiteSpace(command))
+            var commandName = commandLineSerializer.DeserializeObject<string>(argList);
+            if (string.IsNullOrWhiteSpace(commandName))
             {
                 throw new Exception($"No input command");
             }
 
-            var tuple = mSubcommands.Find(c => c.Item1.Name == command);
-            if (tuple == null)
+            var command = Subcommands.Find(item => item.Name == commandName);
+            if (command == null)
             {
-                throw new Exception($"No command named {command}");
+                throw new Exception($"No command named {commandName}");
             }
 
-            return tuple.Item1.Run(argList) ?? ret;
+            return command.Run(argList) ?? ret;
         }
 
         public void Draw(CommandLineWriter writer)
@@ -134,7 +184,7 @@ namespace Decoherence.CommandLineSerialization
                 }
                 argumentExplainHeads.Add(head);
             }
-            foreach (var (command, _) in mSubcommands)
+            foreach (var command in Subcommands)
             {
                 if (command.Name.Length > minLength)
                 {
@@ -150,16 +200,37 @@ namespace Decoherence.CommandLineSerialization
             writer.WriteLine($"See '{Name} help <subcommand>' to read about a specific subcommand.");
         }
 
-        private BuiltinReturn _Help([Option(ShortName = "h", LongName = "help", Desc = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")] bool showHelp)
+        private BuiltinReturn _HelpMethod(
+            [Option(ShortName = "h", LongName = "help", Desc = "Show current command help infos.")] bool showHelp)
         {
             if (showHelp)
             {
-                CommandLineWriter writer = new CommandLineWriter(100, "  ");
+                CommandLineWriter writer = new CommandLineWriter(120, "  ");
                 Draw(writer);
                 return BuiltinReturn.Truncate;
             }
 
-            return BuiltinReturn.Truncate;
+            return BuiltinReturn.Continue;
+        }
+
+        private void _HelpCommand(
+            [Argument(ValueName = "command", Desc = "待查帮助的命令")] string? commandName)
+        {
+            if (commandName == null)
+            {
+                _HelpMethod(true);
+                return;
+            }
+            
+            var command = Subcommands.Find(item => item.Name == commandName);
+            if (command == null)
+            {
+                Console.Error.WriteLine($"Can not find command {commandName}");
+                return;
+            }
+            
+            CommandLineWriter writer = new CommandLineWriter(120, "  ");
+            command.Draw(writer);
         }
 
         private void _DrawUseage(IEnumerable<IOption> options, IEnumerable<IArgument> arguments, CommandLineWriter writer)
@@ -180,7 +251,7 @@ namespace Decoherence.CommandLineSerialization
                 writer.Write($" {argument.GetDrawUsageHead()}");
             }
 
-            if (mSubcommands.Count > 0)
+            if (mGroup2Subcommands.Count > 0)
             {
                 writer.Write($" <subcommand> [sub-options] [sub-args]");
             }
@@ -241,23 +312,38 @@ namespace Decoherence.CommandLineSerialization
 
         private void _DrawSubcommands(CommandLineWriter writer, int minLength)
         {
-            if (mSubcommands.Count <= 0)
+            if (mGroup2Subcommands.Count <= 0)
                 return;
-            
+
             writer.WriteLine();
             writer.WriteLine("Available subcommands");
             writer.IncreaseIndent();
-            
-            foreach (var (command, _) in mSubcommands)
+
+            foreach (var group in mGroups)
             {
-                var head = _FillHead(minLength, command.Name);
+                if (mGroups.Count > 1)
+                {
+                    writer.WriteLine(group);
+                    writer.IncreaseIndent();
+                }
+
+                var commands = mGroup2Subcommands[group];
+                foreach (var (command, _) in commands)
+                {
+                    var head = _FillHead(minLength, command.Name);
                 
-                writer.Write(head);
-                _WriteDesc(writer, command.Desc);
+                    writer.Write(head);
+                    _WriteDesc(writer, command.Desc);
                 
-                writer.WriteLine();
+                    writer.WriteLine();
+                }
+                
+                if (mGroups.Count > 1)
+                {
+                    writer.DecreaseIndent();
+                }
             }
-            
+
             writer.DecreaseIndent();
         }
         

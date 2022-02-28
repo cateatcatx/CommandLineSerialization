@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 
@@ -35,6 +36,20 @@ namespace Decoherence.SystemExtensions
             }
 
             return -1;
+        }
+        
+        [return: MaybeNull]
+        public static T Find<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
+        {
+            foreach (var item in enumerable)
+            {
+                if (predicate(item))
+                {
+                    return item;
+                }
+            }
+
+            return default;
         }
     }
 }
