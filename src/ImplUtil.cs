@@ -20,18 +20,22 @@ namespace Decoherence.CommandLineSerialization
             {
                 return new Argument(argumentAttr.ValueType != ValueType.Default ? argumentAttr.ValueType : defaultValueType, 
                     objType, 
+                    argumentAttr.ValueName,
+                    argumentAttr.Desc,
                     argumentAttr.Priority, argumentAttr.Serializer ?? defaultValueSerializer);
             }
 
             var optionAttr = (OptionAttribute)attr;
             char? shortName = optionAttr.ShortName != null ? optionAttr.ShortName[0] : (defaultOptionName.Length == 1 ? defaultOptionName[0] : null);
-            string? longName = optionAttr.LongName ?? (defaultOptionName.Length > 1 ? defaultOptionName : null);
+            string? longName = optionAttr.LongName ?? (shortName == null && defaultOptionName.Length > 1 ? defaultOptionName : null);
             
             return new Option(
                 shortName,
                 longName,
                 optionAttr.ValueType != ValueType.Default ? optionAttr.ValueType : defaultValueType, 
                 objType, 
+                optionAttr.ValueName,
+                optionAttr.Desc,
                 optionAttr.Serializer ?? defaultValueSerializer);
         }
 

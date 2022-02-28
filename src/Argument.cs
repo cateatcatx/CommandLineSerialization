@@ -6,13 +6,29 @@ namespace Decoherence.CommandLineSerialization
     {
         public int Priority { get; }
         
-        public Argument(ValueType valueType, Type objType, int priority = 0, IValueSerializer? valueSerializer = null)
-            : base(valueType, objType, valueSerializer)
+        public Argument(
+            ValueType valueType, 
+            Type objType, 
+            string? valueName = null, 
+            string? desc = null, 
+            int priority = 0, 
+            IValueSerializer? valueSerializer = null)
+            : base(valueType, objType, valueName, desc, valueSerializer)
         {
             if (!DebugUtil.IsValidArgumentValueType(valueType))
                 throw new ArgumentException(DebugUtil.InvalidArgumentValueTypeError(valueType), nameof(valueType));
 
             Priority = priority;
+        }
+        
+        public override string GetDrawUsageHead()
+        {
+            return $"<{ValueName}>";
+        }
+
+        public override string GetDrawExplainHead()
+        {
+            return ValueName;
         }
     }
 }

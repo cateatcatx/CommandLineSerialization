@@ -7,7 +7,7 @@ namespace Decoherence.CommandLineSerialization
 {
     public class MethodSpecs : ISpecs
     {
-        public IReadOnlyDictionary<string, IOption> Options
+        public IReadOnlyList<IOption> Options
         {
             get
             {
@@ -63,7 +63,7 @@ namespace Decoherence.CommandLineSerialization
             foreach (var paramInfo in parameters)
             {
                 var attr = paramInfo.GetCustomAttribute<SpecAttribute>();
-                var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ImplUtil.GetDefaultValueType(paramInfo.ParameterType);;
+                var defaultValueType = paramInfo.GetCustomAttribute<ParamArrayAttribute>() != null ? ValueType.Sequence : ImplUtil.GetDefaultValueType(paramInfo.ParameterType);
                 var spec = attr != null 
                     ? ImplUtil.GenerateSpecByAttribute(
                         attr,
@@ -71,7 +71,7 @@ namespace Decoherence.CommandLineSerialization
                         paramInfo.Name,
                         defaultValueType,
                         null)
-                    : new Argument(defaultValueType, paramInfo.ParameterType);
+                    : new Argument(defaultValueType, paramInfo.ParameterType, paramInfo.Name);
 
                 mParameterOrderSpecs.Add(spec);
                 mSpecs.AddSpec(spec);

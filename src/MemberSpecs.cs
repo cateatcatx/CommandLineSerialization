@@ -8,7 +8,7 @@ namespace Decoherence.CommandLineSerialization
 {
     public class MemberSpecs : ISpecs
     {
-        public IReadOnlyDictionary<string, IOption> Options 
+        public IReadOnlyList<IOption> Options 
         {
             get
             {
@@ -114,7 +114,7 @@ namespace Decoherence.CommandLineSerialization
             var defaultValueType = ImplUtil.GetDefaultValueType(objType);
             return attr != null ?
                 ImplUtil.GenerateSpecByAttribute(attr, objType, memberInfo.Name, defaultValueType, null) :
-                new Option(memberInfo.Name, defaultValueType, objType);
+                new Option(memberInfo.Name, defaultValueType, objType, memberInfo.Name);
         }
     }
 }

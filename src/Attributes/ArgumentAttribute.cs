@@ -19,5 +19,7 @@ namespace Decoherence.CommandLineSerialization.Attributes
                 mValueType = value;
             }
         }
+        
+        private ValueType mValueType;
     }
 }

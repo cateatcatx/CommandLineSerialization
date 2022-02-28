@@ -42,7 +42,7 @@ namespace Decoherence.CommandLineSerialization
                 (_, _) => { });
         }
 
-        public IReadOnlyDictionary<string, IOption> Options => mSpecs.Options;
+        public IReadOnlyList<IOption> Options => mSpecs.Options;
         public IReadOnlyList<IArgument> Arguments => mSpecs.Arguments;
 
         private readonly ISpecs mSpecs;

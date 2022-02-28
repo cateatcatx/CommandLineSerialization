@@ -6,16 +6,20 @@ namespace Decoherence.CommandLineSerialization
     public abstract class Spec : ISpec
     {
         private const string InvalidOperationError = "No specified ValueSerializer.";
-        
+
+        public string ValueName { get; }
         public ValueType ValueType { get; }
+        public string? Desc { get; }
         public Type ObjType { get; }
 
         protected readonly IValueSerializer? mValueSerializer;
 
-        protected Spec(ValueType valueType, Type objType, IValueSerializer? valueSerializer)
+        protected Spec(ValueType valueType, Type objType, string? valueName, string? desc, IValueSerializer? valueSerializer)
         {
+            ValueName = valueName ?? "ARG";
             ValueType = valueType;
             ObjType = objType;
+            Desc = desc;
             mValueSerializer = valueSerializer;
         }
 
@@ -79,5 +83,8 @@ namespace Decoherence.CommandLineSerialization
             
             return mValueSerializer.SerializeMultiValue(serializer, objType, obj);
         }
+        
+        public abstract string GetDrawUsageHead();
+        public abstract string GetDrawExplainHead();
     }
 }

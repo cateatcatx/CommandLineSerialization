@@ -112,11 +112,10 @@ namespace Decoherence.CommandLineSerialization
 
         #region 序列化相关
 
-        private void _SerializeOptions(IReadOnlyDictionary<string, IOption> options, LinkedList<string> argList, OnSerialized? onSerialized)
+        private void _SerializeOptions(IReadOnlyList<IOption> options, LinkedList<string> argList, OnSerialized? onSerialized)
         {
-            foreach (var kv in options)
+            foreach (var option in options)
             {
-                var option = kv.Value;
                 var obj = onSerialized?.Invoke(option);
                 var optionPrefix = option.LongName != null ? $"--{option.LongName}" : $"-{option.ShortName}"; // LongName优先
                 
@@ -214,7 +213,6 @@ namespace Decoherence.CommandLineSerialization
             HashSet<IOption> parsedOptions = new();
             LinkedListNode<string>? nodeAfterDemarcate = null;
             IOption? parsingOption = null;
-            var options = specs.Options;
             
             // 按顺序处理每个参数，解析option
             while (node != null)
@@ -245,7 +243,7 @@ namespace Decoherence.CommandLineSerialization
                     var optionName = m.Groups[3].Value;
                     var appendedValue = m.Groups[4].Value == "=" ? m.Groups[5].Value : null; // 有"="时可能空值可能有值，没有则为null
                     
-                    if (_TryGetOption(optionName, options, parsedOptions, out var option))
+                    if (_TryGetOption(optionName, specs, parsedOptions, out var option))
                     {
                         _DeserializeOption(onDeserialized, option, appendedValue, parsingMultiValueOptions, ref parsingOption);
                         node = _ConsumeNode(node);
@@ -265,7 +263,7 @@ namespace Decoherence.CommandLineSerialization
                     
                     for (int i = 1; i < shortOptionHolder.Length; ++i)
                     {
-                        if (_TryGetOption(shortOptionHolder[i].ToString(), options, parsedOptions, out var option))
+                        if (_TryGetOption(shortOptionHolder[i].ToString(), specs, parsedOptions, out var option))
                         {
                             int removeCount = shortOptionHolder.Length - i;
                             string? appendedValue = null;
@@ -311,7 +309,7 @@ namespace Decoherence.CommandLineSerialization
             }
             
             // 反序列化未匹配的Non类型值
-            foreach (var option  in options.Values)
+            foreach (var option  in specs.Options)
             {
                 if (option.ValueType != ValueType.Non || parsedOptions.Contains(option))
                 {
@@ -405,9 +403,9 @@ namespace Decoherence.CommandLineSerialization
             return parsingOption;
         }
         
-        private bool _TryGetOption(string optionName, IReadOnlyDictionary<string, IOption> options, ISet<IOption> parsedOptions, [NotNullWhen(true)] out IOption? option)
+        private bool _TryGetOption(string optionName, ISpecs specs, ISet<IOption> parsedOptions, [NotNullWhen(true)] out IOption? option)
         {
-            if (options.TryGetValue(optionName, out option))
+            if (specs.TryGetOption(optionName, out option))
             {
                 if (!parsedOptions.Contains(option))
                 {

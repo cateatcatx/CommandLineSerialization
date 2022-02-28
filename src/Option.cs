@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Decoherence.CommandLineSerialization
 {
@@ -10,10 +11,12 @@ namespace Decoherence.CommandLineSerialization
         public Option(
             char? shortName,
             string? longName,
-            ValueType valueType, 
+            ValueType valueType,
             Type objType,
+            string? valueName = null,
+            string? desc = null,
             IValueSerializer? valueSerializer = null)
-            : base(valueType, objType, valueSerializer)
+            : base(valueType, objType, valueName, desc, valueSerializer)
         {
             ThrowUtil.ThrowIfArgument(shortName == null && string.IsNullOrWhiteSpace(longName), 
                 $"{nameof(shortName)} and {nameof(longName)} can not both be null or empty.");
@@ -35,8 +38,10 @@ namespace Decoherence.CommandLineSerialization
             string name,
             ValueType valueType, 
             Type objType,
+            string? valueName = null, 
+            string? desc = null,
             IValueSerializer? valueSerializer = null)
-            : base(valueType, objType, valueSerializer)
+            : base(valueType, objType, valueName, desc, valueSerializer)
         {
             if (name.Length > 1)
             {
@@ -55,6 +60,55 @@ namespace Decoherence.CommandLineSerialization
 
             if (!DebugUtil.IsValidOptionValueType(valueType))
                 throw new ArgumentException(DebugUtil.InvalidOptionValueTypeError(valueType), nameof(valueType));
+        }
+
+        private void _AppendHead(StringBuilder sb)
+        {
+            bool hasBracket = ShortName != null && LongName != null && ValueType != ValueType.Non;
+            
+            if (hasBracket)
+            {
+                sb.Append("(");
+            }
+            
+            if (ShortName != null)
+            {
+                sb.Append($"-{ShortName}");
+            }
+            if (LongName != null)
+            {
+                sb.Append($"{(ShortName != null ? " | " : string.Empty)}--{LongName}");
+            }
+
+            if (hasBracket)
+            {
+                sb.Append(")");
+            }
+
+            if (ValueType != ValueType.Non)
+            {
+                sb.Append($" <{ValueName}>");
+            }
+        }
+
+        public override string GetDrawUsageHead()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("[");
+            _AppendHead(sb);
+            sb.Append("]");
+
+            return sb.ToString();
+        }
+
+        public override string GetDrawExplainHead()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            _AppendHead(sb);
+
+            return sb.ToString();
         }
     }
 }

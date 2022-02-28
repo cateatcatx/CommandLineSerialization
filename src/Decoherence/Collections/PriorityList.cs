@@ -34,7 +34,7 @@ namespace Decoherence
             _Add(item);
         }
 
-        public int Add(object value)
+        int IList.Add(object value)
         {
             if (value is not T item)
                 throw new ArgumentException($"Not {typeof(T)}", nameof(value));
@@ -148,7 +148,7 @@ namespace Decoherence
             set => mList[index] = value;
         }
 
-        int IReadOnlyCollection<T>.Count => mList.Count;
+        public int Count => mList.Count;
         
         private int _Add(T item)
         {

@@ -6,10 +6,6 @@ namespace Decoherence.CommandLineSerialization
 {
     public interface ICommandLineApp
     {
-        event Action? AfterGlobalMethod;
-        
-        int Start(IEnumerable<string> args);
-        void AddGlobalMethod(MethodBase method, Func<object?>? objGetter);
-        void AddCommand(MethodBase method, Func<object?>? objGetter, string? commandName = null);
+        Command RootCommand { get; }
     }
 }

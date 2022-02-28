@@ -18,13 +18,24 @@ namespace Decoherence.CommandLineSerialization.Attributes
             }
         }
 
+        public string? ValueName
+        {
+            get;
+            set;
+        }
+
         public abstract ValueType ValueType
         {
             get;
             set;
         }
 
+        public string? Desc
+        {
+            get;
+            set;
+        }
+
         private Type? mValueSerializerType;
-        protected ValueType mValueType;
     }
 }

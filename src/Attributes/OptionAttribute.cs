@@ -40,8 +40,9 @@ namespace Decoherence.CommandLineSerialization.Attributes
                 mValueType = value;
             }
         }
-
+        
         private string? mLongName;
         private string? mShortName;
+        private ValueType mValueType;
     }
 }
