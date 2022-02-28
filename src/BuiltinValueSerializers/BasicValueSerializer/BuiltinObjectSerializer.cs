@@ -135,7 +135,7 @@ namespace Decoherence.CommandLineSerialization
 
         public bool SerializeNonValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public string SerializeSingleValue(CommandLineSerializer serializer, Type objType, object? obj)
@@ -157,7 +157,7 @@ namespace Decoherence.CommandLineSerialization
 
         public IEnumerable<string> SerializeMultiValue(CommandLineSerializer serializer, Type objType, object? obj)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

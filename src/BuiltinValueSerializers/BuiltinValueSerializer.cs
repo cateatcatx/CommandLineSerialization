@@ -35,7 +35,15 @@ namespace Decoherence.CommandLineSerialization
 
         public bool CanHandleType(Type objType)
         {
-            throw new NotImplementedException();
+            foreach (var serializer in mSerializer)
+            {
+                if (serializer.CanHandleType(objType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public ObjectSpecs? GetObjectSpecs(Type objType)
