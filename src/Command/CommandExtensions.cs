@@ -1,10 +1,17 @@
 using System;
+using System.Collections.Generic;
 using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
     public static class CommandExtensions
     {
+        public static int? Run(this ICommand command, IEnumerable<string> args, out LinkedList<string> remainArgs)
+        {
+            remainArgs = new LinkedList<string>(args);
+            return command.Run(remainArgs);
+        }
+        
         public static void AddMethod(this Command self, Type type, string methodName, object? obj)
         {
             self.AddMethod(type.GetMethodThrow(methodName), () => obj);
@@ -15,27 +22,29 @@ namespace Decoherence.CommandLineSerialization
             self.AddMethod(type.GetMethodThrow(methodName), objGetter);
         }
         
-        public static void AddSubcommand(this Command self, Type type, string methodName, object? obj)
+        public static Command AddSubcommand(this Command self, 
+            Type type, 
+            string methodName, 
+            object? obj, 
+            string? commandName = null, 
+            string? group = null)
         {
-            AddSubcommand(self, type, methodName, obj, null);
+            return AddSubcommand(self, type, methodName, () => obj, commandName, group);
         }
         
-        public static void AddSubcommand(this Command self, Type type, string methodName, object? obj, string? group)
+        public static Command AddSubcommand(this Command self, 
+            Type type, 
+            string methodName, 
+            Func<object?>? objGetter, 
+            string? commandName = null, 
+            string? group = null)
         {
             // todo 支持attribute
-            var command = new Command(methodName, null);
-            command.AddMethod(type, methodName, obj);
-            
-            self.AddSubcommand(command, group);
-        }
-        
-        public static void AddSubcommand(this Command self, string commandName, Type type, string methodName, Func<object?>? objGetter)
-        {
-            // todo 支持attribute
-            var command = new Command(commandName, null);
+            var command = new Command(commandName ?? methodName, null);
             command.AddMethod(type, methodName, objGetter);
             
-            self.AddSubcommand(command);
+            self.AddSubcommand(command, group);
+            return command;
         }
     }
 }

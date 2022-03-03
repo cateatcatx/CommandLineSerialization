@@ -7,16 +7,19 @@ using Decoherence.SystemExtensions;
 
 namespace Decoherence.CommandLineSerialization
 {
-    public class Command
+    public class Command : ICommand
     {
         private const string BUILTIN_GROUP = "Default utilities";
         
-        public event Action? BeforeMethod;
-        public event Action? AfterMethod;
-        
-        public readonly string Name;
-        public readonly string? Desc;
-        public IEnumerable<Command> Subcommands
+        public event Action? BeforeAllMethod;
+        public event Action? AfterAllMethod;
+        public event Action<MethodBase, ParameterInfo[], object?[]>? BeforeOneMethod;
+        public event Action<MethodBase, object?>? AfterOneMethod;
+
+        public string Name { get; }
+        public string? Desc { get; }
+        public int MaxLineLength { get; }
+        public IEnumerable<ICommand> Subcommands
         {
             get
             {
@@ -30,9 +33,8 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        private readonly int mMaxLineLength;
         private readonly PriorityList<Tuple<MethodSpecs, Func<object?>?, int>> mMethods;
-        private readonly Dictionary<string, PriorityList<Tuple<Command, int>>> mGroup2Subcommands;
+        private readonly Dictionary<string, PriorityList<Tuple<ICommand, int>>> mGroup2Subcommands;
         private readonly PriorityList<string> mGroups;
 
         private bool mAddHelp;
@@ -40,7 +42,7 @@ namespace Decoherence.CommandLineSerialization
         public Command(string name, string? desc, int? maxLineLength = null)
         {
             mMethods = new PriorityList<Tuple<MethodSpecs, Func<object?>?, int>>((tuple1, tuple2) => tuple1.Item3 - tuple2.Item3);
-            mGroup2Subcommands = new Dictionary<string, PriorityList<Tuple<Command, int>>>();
+            mGroup2Subcommands = new Dictionary<string, PriorityList<Tuple<ICommand, int>>>();
             mGroups = new PriorityList<string>((group1, group2) =>
             {
                 // 保证BUILTIN_GROUP在最后
@@ -51,22 +53,17 @@ namespace Decoherence.CommandLineSerialization
 
             Name = name;
             Desc = desc;
-            mMaxLineLength = maxLineLength ?? 100;
+            MaxLineLength = maxLineLength ?? 100;
         }
         
-        public void AddMethod(MethodBase method, Func<object?>? objGetter)
+        public void AddMethod(MethodBase method, Func<object?>? objGetter = null)
         {
             ThrowUtil.ThrowIfArgumentNull(method);
             
             mMethods.Add(new Tuple<MethodSpecs, Func<object?>?, int>(new MethodSpecs(method), objGetter, 0));
         }
         
-        public void AddSubcommand(Command command)
-        {
-            AddSubcommand(command, BUILTIN_GROUP);
-        }
-        
-        public void AddSubcommand(Command command, string? group)
+        public void AddSubcommand(ICommand command, string? group = null)
         {
             ThrowUtil.ThrowIfArgumentNull(command);
 
@@ -80,8 +77,8 @@ namespace Decoherence.CommandLineSerialization
                 mGroups.Add(group);
             }
 
-            var commands = mGroup2Subcommands.AddOrCreateValue(group, () => new PriorityList<Tuple<Command, int>>((tuple1, tuple2) => tuple2.Item2 - tuple1.Item2));
-            commands.Add(new Tuple<Command, int>(command, 0));
+            var commands = mGroup2Subcommands.AddOrCreateValue(group, () => new PriorityList<Tuple<ICommand, int>>((tuple1, tuple2) => tuple2.Item2 - tuple1.Item2));
+            commands.Add(new Tuple<ICommand, int>(command, 0));
 
             // 有Subcommand才有Help
             if (!mAddHelp)
@@ -95,23 +92,23 @@ namespace Decoherence.CommandLineSerialization
             }
         }
 
-        public int? Run(IEnumerable<string> args, out LinkedList<string> remainArgs)
-        {
-            remainArgs = new LinkedList<string>(args);
-            return Run(remainArgs);
-        }
-        
         public int? Run(LinkedList<string> argList)
         {
             CommandLineSerializer commandLineSerializer = new CommandLineSerializer();
             
-            BeforeMethod?.Invoke();
+            BeforeAllMethod?.Invoke();
 
             bool truncate = false;
             int? ret = null; // 返回值取最后一个（本命令加上所有后面会执行的子命令）返回的int值
             foreach ((MethodSpecs methodSpecs, Func<object?>? objGetter, _) in mMethods)
             {
-                var retObj = MethodInvoker.InvokeMethod(commandLineSerializer, methodSpecs, objGetter?.Invoke(), argList);
+                var retObj = MethodInvoker.InvokeMethod(commandLineSerializer, methodSpecs, objGetter?.Invoke(), argList, 
+                    (paramInfos, objects) =>
+                    {
+                        BeforeOneMethod?.Invoke(methodSpecs.Method, paramInfos, objects);
+                    });
+                AfterOneMethod?.Invoke(methodSpecs.Method, retObj);
+                
                 if (retObj is BuiltinReturn builtinReturn)
                 {
                     if (builtinReturn == BuiltinReturn.Truncate)
@@ -126,9 +123,9 @@ namespace Decoherence.CommandLineSerialization
                 }
             }
             
-            AfterMethod?.Invoke();
+            AfterAllMethod?.Invoke();
 
-            if (truncate || mGroup2Subcommands.Count <= 0)
+            if (truncate || !Subcommands.Any())
             {
                 return ret;
             }
@@ -210,7 +207,7 @@ namespace Decoherence.CommandLineSerialization
         {
             if (showHelp)
             {
-                Draw(new CommandLineWriter(mMaxLineLength, "  "));
+                Draw(new CommandLineWriter(MaxLineLength, "  "));
                 return BuiltinReturn.Truncate;
             }
 
@@ -222,7 +219,7 @@ namespace Decoherence.CommandLineSerialization
         {
             if (commandName == null)
             {
-                Draw(new CommandLineWriter(mMaxLineLength, "  "));
+                Draw(new CommandLineWriter(MaxLineLength, "  "));
                 return;
             }
             
@@ -233,7 +230,7 @@ namespace Decoherence.CommandLineSerialization
                 return;
             }
             
-            command.Draw(new CommandLineWriter(mMaxLineLength, "  "));
+            command.Draw(new CommandLineWriter(MaxLineLength, "  "));
         }
 
         private void _DrawUseage(IEnumerable<IOption> options, IEnumerable<IArgument> arguments, CommandLineWriter writer)

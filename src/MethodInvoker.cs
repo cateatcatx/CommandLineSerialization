@@ -37,12 +37,12 @@ namespace Decoherence.CommandLineSerialization
             object? obj,
             LinkedList<string> argList)
         {
-            var retObj = InvokeMethod(serializer, new MethodSpecs(method), obj, argList);
+            var retObj = InvokeMethod(serializer, new MethodSpecs(method), obj, argList, null);
             return (TRet)retObj!;
         }
         
         /// <summary>
-        /// <inheritdoc cref="InvokeMethod(Decoherence.CommandLineSerialization.CommandLineSerializer,Decoherence.CommandLineSerialization.MethodSpecs,object?,System.Collections.Generic.LinkedList{string})"/>
+        /// 调用函数
         /// </summary>
         /// <param name="serializer">命令行反序列器</param>
         /// <param name="method">待调用函数</param>
@@ -55,11 +55,11 @@ namespace Decoherence.CommandLineSerialization
             object? obj,
             LinkedList<string> argList)
         {
-            return InvokeMethod(serializer, new MethodSpecs(method), obj, argList);
+            return InvokeMethod(serializer, new MethodSpecs(method), obj, argList, null);
         }
 
         /// <summary>
-        /// <inheritdoc cref="InvokeMethod(Decoherence.CommandLineSerialization.CommandLineSerializer,Decoherence.CommandLineSerialization.MethodSpecs,object?,System.Collections.Generic.LinkedList{string})"/>
+        /// 调用函数
         /// </summary>
         /// <param name="serializer">命令行反序列器</param>
         /// <param name="method">待调用函数</param>
@@ -75,7 +75,7 @@ namespace Decoherence.CommandLineSerialization
             out LinkedList<string> remainArgs)
         {
             remainArgs = new LinkedList<string>(args);
-            return InvokeMethod(serializer, new MethodSpecs(method), obj, remainArgs);
+            return InvokeMethod(serializer, new MethodSpecs(method), obj, remainArgs, null);
         }
 
         /// <summary>
@@ -90,7 +90,24 @@ namespace Decoherence.CommandLineSerialization
             CommandLineSerializer serializer,
             MethodSpecs methodSpecs,
             object? obj,
-            LinkedList<string> argList)
+            LinkedList<string> argList) 
+            => InvokeMethod(serializer, methodSpecs, obj, argList, null);
+
+        /// <summary>
+        /// 调用函数
+        /// </summary>
+        /// <param name="serializer">命令行反序列器</param>
+        /// <param name="methodSpecs">函数的参数说明</param>
+        /// <param name="obj">调用函数时的this对象</param>
+        /// <param name="argList">命令行参数，本集合会被修改，调用完毕后集合内是剩余的命令行参数</param>
+        /// <param name="beforeInvoke">获取到函数参数后调用函数前触发</param>
+        /// <returns>函数返回值</returns>
+        public static object? InvokeMethod(
+            CommandLineSerializer serializer,
+            MethodSpecs methodSpecs,
+            object? obj,
+            LinkedList<string> argList,
+            Action<ParameterInfo[], object?[]>? beforeInvoke)
         {
             var method = methodSpecs.Method;
             var paramInfos = method.GetParameters();
@@ -111,18 +128,19 @@ namespace Decoherence.CommandLineSerialization
             // 设置函数参数自身的默认值
             for (var i = 0; i < length; ++i)
             {
-                if (touchedIndexes[i])
+                var paramInfo = paramInfos[i];
+                if (!touchedIndexes[i])
                 {
-                    continue;
+                    if (paramInfo.DefaultValue == DBNull.Value)
+                    {
+                        throw new InvalidOperationException($"Lack of {i + 1}th non-default parameter: {paramInfo.Name}.");
+                    }
+
+                    parameters[i] = paramInfo.DefaultValue;
                 }
-                
-                if (paramInfos[i].DefaultValue == DBNull.Value)
-                {
-                    throw new InvalidOperationException($"Lack of {i+1}th non-default parameter: {paramInfos[i].Name}.");
-                }
-                
-                parameters[i] = paramInfos[i].DefaultValue;
             }
+            
+            beforeInvoke?.Invoke(paramInfos, parameters);
 
             if (method is ConstructorInfo constructorInfo)
             {
