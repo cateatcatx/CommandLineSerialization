@@ -39,7 +39,6 @@ namespace Decoherence.CommandLineSerialization
             string? commandName = null, 
             string? group = null)
         {
-            // todo 支持attribute
             var command = new Command(commandName ?? methodName, null);
             command.AddMethod(type, methodName, objGetter);
             
