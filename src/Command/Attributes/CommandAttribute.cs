@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization
+namespace Decoherence.CommandLineSerialization;
+
+public class CommandAttribute : Attribute
 {
-    public class CommandAttribute : Attribute
-    {
-        public string? Name;
-        public string? Desc;
-    }
+    public string? Name;
+    public string? Desc;
 }

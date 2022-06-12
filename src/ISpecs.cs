@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 
-namespace Decoherence.CommandLineSerialization
+namespace Decoherence.CommandLineSerialization;
+
+public interface ISpecs
 {
-    public interface ISpecs
-    {
-        IReadOnlyList<IOption> Options { get; }
-        IReadOnlyList<IArgument> Arguments { get; }
-    }
+    IReadOnlyList<IOption> Options { get; }
+    IReadOnlyList<IArgument> Arguments { get; }
 }
