@@ -10,10 +10,11 @@ sync_paths = [
 	"Debug",
 	"Collections/PriorityList.cs",
 	"SystemExtensions/CharExtensions.cs",
-	"SystemExtensions/DictionaryExtensions.cs",
 	"SystemExtensions/MemberInfoExtensions.cs",
 	"SystemExtensions/StringExtensions.cs",
 	"SystemExtensions/TypeExtensions.cs",
+	"SystemExtensions/ListExtensions.cs",
+	"SystemExtensions/EnumerableExtensions.cs",
 	"Utils/ReflectUtil.cs",
 ]
 

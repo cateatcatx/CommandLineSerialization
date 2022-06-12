@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization.Attributes
+namespace Decoherence.CommandLineSerialization.Attributes;
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Constructor)]
+public class IgnoreAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Constructor)]
-    public class IgnoreAttribute : Attribute
-    {
         
-    }
 }

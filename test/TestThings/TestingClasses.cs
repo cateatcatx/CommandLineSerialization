@@ -3,6 +3,13 @@ using Decoherence.CommandLineSerialization.Attributes;
 
 namespace Decoherence.CommandLineSerialization.Test
 {
+    public enum TestingEnum
+    {
+        One,
+        Two,
+        Three,
+    }
+    
     public class TestingClass1
     {
         public int FieldA;
@@ -92,5 +99,10 @@ namespace Decoherence.CommandLineSerialization.Test
     {
         [Argument]
         public List<TestingClass1> FieldA;
+    }
+
+    public class TestingClass7
+    {
+        public TestingEnum FieldA;
     }
 }

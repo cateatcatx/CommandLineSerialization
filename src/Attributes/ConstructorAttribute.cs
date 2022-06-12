@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization.Attributes
+namespace Decoherence.CommandLineSerialization.Attributes;
+
+[AttributeUsage(AttributeTargets.Constructor)]
+public class ConstructorAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Constructor)]
-    public class ConstructorAttribute : Attribute
-    {
         
-    }
 }

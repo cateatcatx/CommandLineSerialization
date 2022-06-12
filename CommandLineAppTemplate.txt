@@ -1,0 +1,24 @@
+usage: app [options] <arg1> <arg2> <subcommand> [sub-options] [sub-args]
+usage: app [options] <arg1> <arg2>
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxx
+
+Available options:
+  --opt1 arg      : xxxxxx
+  -o [--opt2] arg : xxxxxx
+  opt3            : xxxxxx
+  opt4            : xxxxxx
+
+Available args:
+  arg1            : xxxxx
+  [arg2]          : xxxxx
+  arg3...         : xxxxx
+
+Available subcommands:
+  cm1             : xxxxx
+                      xxxxxxxxx
+  cmd2            : xxxxxxxx
+
+See 'app help <subcommand>' to read about a specific subcommand.

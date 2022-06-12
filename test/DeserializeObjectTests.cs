@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace Decoherence.CommandLineSerialization.Test
@@ -43,7 +44,22 @@ namespace Decoherence.CommandLineSerialization.Test
             var obj = _Deserialize<List<TestingClass1>>("-- \"--FieldA 1 --FieldB 1\" \"--FieldA 2 --FieldB 2\"", out var remainArgs);
             
             Assert.True(obj[0].FieldA == 1 && obj[0].FieldB == 1 && obj[1].FieldA == 2 && obj[1].FieldB == 2);
-            Assert.True(string.Join(' ', remainArgs) == "--");
+            Assert.True(string.Join(' ', remainArgs) == "");
+        }
+        
+        [Test]
+        public void TestLimitEnumFail()
+        {
+            Assert.Catch<InvalidOperationException>(() => _Deserialize<TestingClass7>("--FieldA AAA", out _));
+        }
+        
+        [Test]
+        public void TestLimitEnumSuccess()
+        {
+            var obj = _Deserialize<TestingClass7>("--FieldA Two", out var remainArgs);
+            
+            Assert.True(obj.FieldA == TestingEnum.Two);
+            Assert.True(string.Join(' ', remainArgs) == "");
         }
 
         private T _Deserialize<T>(string commandLine, out LinkedList<string> remainArgs)

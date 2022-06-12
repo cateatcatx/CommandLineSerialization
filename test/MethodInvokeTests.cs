@@ -13,7 +13,7 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestNormal()
         {
-            var ret = _Invoke(nameof(TestingMethods.Foo1), "-abc1 1 -ccc2 2", out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo1), "1 2 -abc1 -ccc2", out var remainArgs);
             
             Assert.True(string.Join(' ', remainArgs) == "-abc1 -ccc2");
             Assert.True(ret != null && (ret as string) == "1,2");
@@ -32,17 +32,17 @@ namespace Decoherence.CommandLineSerialization.Test
         [Test]
         public void TestUnInputDefaultParam()
         {
-            var ret = _Invoke(nameof(TestingMethods.Foo3), "1 -a123", out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo3), "-- -1", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
-            Assert.True(tmp == "-a123", tmp);
-            Assert.True(ret != null && (ret as string) == "1,2", (ret as string));
+            Assert.True(tmp == "", tmp);
+            Assert.True(ret != null && (ret as string) == "-1,2", (ret as string));
         }
         
         [Test]
         public void TestInputDefaultParm()
         {
-            var ret = _Invoke(nameof(TestingMethods.Foo3), "1 -a123 3 4", out var remainArgs);
+            var ret = _Invoke(nameof(TestingMethods.Foo3), "1 3 -a123 4", out var remainArgs);
 
             var tmp = string.Join(' ', remainArgs);
             Assert.True(tmp == "-a123 4", tmp);

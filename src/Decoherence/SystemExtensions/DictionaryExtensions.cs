@@ -1,38 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Decoherence.SystemExtensions
-{
-    #if HIDE_DECOHERENCE
-    internal static class DictionaryExtensions
-#else
+namespace Decoherence.SystemExtensions;
 #if HIDE_DECOHERENCE
-    internal static class DictionaryExtensions
+internal static class DictionaryExtensions
 #else
     public static class DictionaryExtensions
 #endif
-#endif
+{
+    public static TValue AddOrCreateValue<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, Func<TValue> createFunc)
     {
-        public static TValue AddOrCreateValue<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, Func<TValue> createFunc)
+        if (!self.TryGetValue(key, out var value))
         {
-            if (!self.TryGetValue(key, out var value))
-            {
-                value = createFunc();
-                self.Add(key, value);
-            }
+            value = createFunc();
+            self.Add(key, value);
+        }
 
-            return value;
-        }
+        return value;
+    }
         
-        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value)
+    public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value)
+    {
+        if (!self.ContainsKey(key))
         {
-            if (!self.ContainsKey(key))
-            {
-                self.Add(key, value);
-                return true;
-            }
-            
-            return false;
+            self.Add(key, value);
+            return true;
         }
+            
+        return false;
     }
 }

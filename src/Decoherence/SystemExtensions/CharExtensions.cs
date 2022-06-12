@@ -1,7 +1,6 @@
-﻿namespace Decoherence.SystemExtensions
-{
-    #if HIDE_DECOHERENCE
-    internal static class CharExtensions
+﻿namespace Decoherence.SystemExtensions;
+#if HIDE_DECOHERENCE
+internal static class CharExtensions
 #else
 #if HIDE_DECOHERENCE
     internal static class CharExtensions
@@ -9,21 +8,20 @@
     public static class CharExtensions
 #endif
 #endif
+{
+    /// <summary>
+    /// 是否为字母
+    /// </summary>
+    public static bool IsAlpha(this char self)
     {
-        /// <summary>
-        /// 是否为字母
-        /// </summary>
-        public static bool IsAlpha(this char self)
-        {
-            return ('A' <= self && self <= 'Z') || ('a' <= self && self <= 'z');
-        }
+        return ('A' <= self && self <= 'Z') || ('a' <= self && self <= 'z');
+    }
 
-        /// <summary>
-        /// 是否为数字
-        /// </summary>
-        public static bool IsDigit(this char self)
-        {
-            return '0' <= self && self <= '9';
-        }
+    /// <summary>
+    /// 是否为数字
+    /// </summary>
+    public static bool IsDigit(this char self)
+    {
+        return '0' <= self && self <= '9';
     }
 }
