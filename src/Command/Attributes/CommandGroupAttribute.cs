@@ -1,13 +1,14 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization;
-
-public class CommandGroupAttribute : Attribute
+namespace Decoherence.CommandLineSerialization
 {
-    public string? Group;
-
-    public CommandGroupAttribute(string? group = null)
+    public class CommandGroupAttribute : Attribute
     {
-        Group = group;
+        public string? Group;
+
+        public CommandGroupAttribute(string group)
+        {
+            Group = group;
+        }
     }
 }

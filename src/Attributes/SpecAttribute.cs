@@ -1,40 +1,41 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization.Attributes;
-
-public abstract class SpecAttribute : Attribute
+namespace Decoherence.CommandLineSerialization.Attributes
 {
-    public IValueSerializer? Serializer => 
-        ValueSerializerType == null ? null : (IValueSerializer)Activator.CreateInstance(ValueSerializerType);
-
-    public Type? ValueSerializerType
+    public abstract class SpecAttribute : Attribute
     {
-        get => mValueSerializerType;
-        set
+        public IValueSerializer? Serializer => 
+            ValueSerializerType == null ? null : (IValueSerializer)Activator.CreateInstance(ValueSerializerType);
+
+        public Type? ValueSerializerType
         {
-            if (value != null && !DebugUtil.IsValidValueSerializerType(value))
-                throw new ArgumentException(DebugUtil.InvalidValueSerializerTypeError(value));
-            mValueSerializerType = value;
+            get => mValueSerializerType;
+            set
+            {
+                if (value != null && !DebugUtil.IsValidValueSerializerType(value))
+                    throw new ArgumentException(DebugUtil.InvalidValueSerializerTypeError(value));
+                mValueSerializerType = value;
+            }
         }
-    }
 
-    public string? ValueName
-    {
-        get;
-        set;
-    }
+        public string? ValueName
+        {
+            get;
+            set;
+        }
 
-    public abstract ValueType ValueType
-    {
-        get;
-        set;
-    }
+        public abstract ValueType ValueType
+        {
+            get;
+            set;
+        }
 
-    public string? Desc
-    {
-        get;
-        set;
-    }
+        public string? Desc
+        {
+            get;
+            set;
+        }
 
-    private Type? mValueSerializerType;
+        private Type? mValueSerializerType;
+    }
 }

@@ -1,47 +1,48 @@
 ﻿using System;
 
-namespace Decoherence.CommandLineSerialization.Attributes;
-
-[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property)]
-public class OptionAttribute : SpecAttribute
+namespace Decoherence.CommandLineSerialization.Attributes
 {
-    public string? ShortName
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Field | AttributeTargets.Property)]
+    public class OptionAttribute : SpecAttribute
     {
-        get => mShortName;
-        set
+        public string? ShortName
         {
-            if (value != null && !DebugUtil.IsValidOptionShortName(value))
-                throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(value));
+            get => mShortName;
+            set
+            {
+                if (value != null && !DebugUtil.IsValidOptionShortName(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionShortNameError(value));
 
-            mShortName = value;
+                mShortName = value;
+            }
         }
-    }
         
-    public string? LongName
-    {
-        get => mLongName;
-        set
+        public string? LongName
         {
-            if (value != null && !DebugUtil.IsValidOptionLongName(value))
-                throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(value));
+            get => mLongName;
+            set
+            {
+                if (value != null && !DebugUtil.IsValidOptionLongName(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionLongNameError(value));
 
-            mLongName = value;
+                mLongName = value;
+            }
         }
-    }
         
-    public override ValueType ValueType
-    {
-        get => mValueType;
-        set
+        public override ValueType ValueType
         {
-            if (value != ValueType.Default && !DebugUtil.IsValidOptionValueType(value))
-                throw new ArgumentException(DebugUtil.InvalidOptionValueTypeError(value));
+            get => mValueType;
+            set
+            {
+                if (value != ValueType.Default && !DebugUtil.IsValidOptionValueType(value))
+                    throw new ArgumentException(DebugUtil.InvalidOptionValueTypeError(value));
 
-            mValueType = value;
+                mValueType = value;
+            }
         }
-    }
         
-    private string? mLongName;
-    private string? mShortName;
-    private ValueType mValueType;
+        private string? mLongName;
+        private string? mShortName;
+        private ValueType mValueType;
+    }
 }

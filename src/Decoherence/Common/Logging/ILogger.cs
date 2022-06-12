@@ -1,9 +1,11 @@
-﻿namespace Decoherence.Logging;
+﻿namespace Decoherence.Logging
+{
 #if HIDE_DECOHERENCE
-internal interface ILogger
+    internal interface ILogger
 #else
     public interface ILogger
 #endif
-{
-    void Write(LogLevel logLevel, string message);
+    {
+        void Write(LogLevel logLevel, string message);
+    }
 }

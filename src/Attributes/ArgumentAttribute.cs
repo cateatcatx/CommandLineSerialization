@@ -18,6 +18,8 @@ public class ArgumentAttribute : SpecAttribute
 
             mValueType = value;
         }
+        
+        private ValueType mValueType;
     }
         
     private ValueType mValueType;
